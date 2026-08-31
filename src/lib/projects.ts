@@ -1,0 +1,141 @@
+import { cache } from "react";
+import { supabasePublic } from "./supabase/public";
+import type {
+  Channel,
+  Commit,
+  Project,
+  ProjectStatus,
+  PullRequest,
+  RepoLink,
+  PrState,
+} from "./project-types";
+
+export * from "./project-types";
+
+/**
+ * 프로젝트·채널 읽기 (공개 화면용).
+ *
+ * `posts.ts`와 같은 규칙입니다 — 쿠키를 건드리지 않는 anon 클라이언트를 써서
+ * 정적 생성을 유지하고, 무엇이 보이는지는 RLS가 정합니다.
+ */
+
+const PROJECT_COLUMNS =
+  "slug, name, description, repo, status, link_state, branch, language, readme, last_activity, synced_at";
+
+type ProjectRow = {
+  slug: string;
+  name: string;
+  description: string;
+  repo: string | null;
+  status: string;
+  link_state: string;
+  branch: string | null;
+  language: string | null;
+  readme: string | null;
+  last_activity: string | null;
+  synced_at: string | null;
+};
+
+const toProject = (row: ProjectRow): Project => ({
+  slug: row.slug,
+  name: row.name,
+  description: row.description,
+  repo: row.repo,
+  status: row.status as ProjectStatus,
+  linkState: row.link_state as RepoLink,
+  branch: row.branch,
+  language: row.language,
+  readme: row.readme,
+  lastActivity: row.last_activity,
+  syncedAt: row.synced_at,
+});
+
+/** 최근 활동순. 활동 기록이 없는 프로젝트는 뒤로 보냅니다. */
+export const getProjects = cache(async (): Promise<Project[]> => {
+  const { data, error } = await supabasePublic
+    .from("projects")
+    .select(PROJECT_COLUMNS)
+    .order("last_activity", { ascending: false, nullsFirst: false })
+    .order("name");
+
+  if (error) throw new Error(`프로젝트를 불러오지 못했습니다: ${error.message}`);
+  return (data as ProjectRow[]).map(toProject);
+});
+
+export async function getProject(slug: string): Promise<Project | undefined> {
+  return (await getProjects()).find((p) => p.slug === slug);
+}
+
+export async function activeProjects(): Promise<Project[]> {
+  return (await getProjects()).filter((p) => p.status === "active");
+}
+
+export async function archivedProjects(): Promise<Project[]> {
+  return (await getProjects()).filter((p) => p.status === "archived");
+}
+
+/** 04 검색 결과 — 이름 · 설명 · 저장소 이름에서 찾습니다. */
+export async function searchProjects(query: string): Promise<Project[]> {
+  const q = query.trim().toLowerCase();
+  if (!q) return [];
+  return (await getProjects()).filter(
+    (p) =>
+      p.name.toLowerCase().includes(q) ||
+      p.description.toLowerCase().includes(q) ||
+      (p.repo ?? "").toLowerCase().includes(q),
+  );
+}
+
+/* ---------- 저장소 스냅샷 (2단계에서 GitHub이 채웁니다) ---------- */
+
+export async function getCommits(projectSlug: string, limit = 5): Promise<Commit[]> {
+  const { data, error } = await supabasePublic
+    .from("repo_commits")
+    .select("sha, message, author, committed_at, url")
+    .eq("project_slug", projectSlug)
+    .order("committed_at", { ascending: false })
+    .limit(limit);
+
+  if (error) throw new Error(`커밋을 불러오지 못했습니다: ${error.message}`);
+  return data.map((r) => ({
+    sha: r.sha,
+    message: r.message,
+    author: r.author,
+    at: r.committed_at,
+    url: r.url,
+  }));
+}
+
+export async function getPulls(projectSlug: string, limit = 5): Promise<PullRequest[]> {
+  const { data, error } = await supabasePublic
+    .from("repo_pulls")
+    .select("number, title, state, url, at")
+    .eq("project_slug", projectSlug)
+    .order("at", { ascending: false })
+    .limit(limit);
+
+  if (error) throw new Error(`Pull Request를 불러오지 못했습니다: ${error.message}`);
+  return data.map((r) => ({
+    number: r.number,
+    title: r.title,
+    state: r.state as PrState,
+    url: r.url,
+    at: r.at,
+  }));
+}
+
+/* ---------- 채널 ---------- */
+
+export const getChannels = cache(async (): Promise<Channel[]> => {
+  const { data, error } = await supabasePublic
+    .from("channels")
+    .select("id, name, handle, url, note")
+    .order("name");
+
+  if (error) throw new Error(`채널을 불러오지 못했습니다: ${error.message}`);
+  return data as Channel[];
+});
+
+export async function getChannel(id: string): Promise<Channel | undefined> {
+  return (await getChannels()).find((c) => c.id === id);
+}
