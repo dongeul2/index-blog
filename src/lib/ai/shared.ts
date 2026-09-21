@@ -14,6 +14,15 @@ export function isAiTask(v: string): v is AiTask {
   return (AI_TASKS as string[]).includes(v);
 }
 
+/** 여유 / 주의 / 소진. 한도를 모르면 판정하지 않습니다(null). */
+export type QuotaLevel = "ok" | "warn" | "empty";
+
+export const LEVEL_LABEL: Record<QuotaLevel, string> = {
+  ok: "여유",
+  warn: "주의",
+  empty: "소진",
+};
+
 /** 드롭다운 한 항목. 남은 여유는 한도를 모르면 null입니다. */
 export type ModelChoice = {
   id: string;
@@ -22,6 +31,35 @@ export type ModelChoice = {
   /** 오늘 남은 요청 수. 한도 미설정이면 null — 0과 구별해야 합니다. */
   remaining: number | null;
 };
+
+/**
+ * 리셋까지 남은 시간. 「6시간 12분」
+ *
+ * 계산은 PT 기준으로 DB가 했고, 여기서는 지금과의 차이만 잽니다 —
+ * 시간대 산술이 아니라 뺄셈이라 클라이언트에서 해도 안전합니다.
+ */
+export function formatUntil(iso: string, now: Date = new Date()): string {
+  if (!iso) return "";
+  const ms = new Date(iso).getTime() - now.getTime();
+  if (!Number.isFinite(ms) || ms <= 0) return "곧";
+
+  const min = Math.floor(ms / 60_000);
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  if (h === 0) return `${m}분`;
+  if (m === 0) return `${h}시간`;
+  return `${h}시간 ${m}분`;
+}
+
+/** 리셋 시각을 KST로. 내부 계산은 PT지만 사람에게는 우리 시간으로 보여 줍니다. */
+export function seoulTime(iso: string): string {
+  if (!iso) return "";
+  return new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul",
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(new Date(iso));
+}
 
 export type CommitForPrompt = {
   sha: string;

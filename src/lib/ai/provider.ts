@@ -3,6 +3,7 @@ import { GoogleGenAI } from "@google/genai";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { classify, humanMessage, messageOf, type Classified } from "./errors";
 import { labelOf, resolveModel } from "./models";
+import { getPtBounds } from "./quota";
 import { logUsage, usageClient } from "./usage";
 import { ERROR_MARK, USAGE_MARK, type AiTask, type StreamError, type StreamUsage } from "./shared";
 
@@ -33,6 +34,20 @@ const MAX_RETRIES = 2;
 const BASE_DELAY_MS = 1_000;
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * 오류를 화면이 쓸 모양으로 만듭니다.
+ *
+ * 일일 한도일 때만 리셋 시각을 붙입니다 — 분당 한도에 "PT 자정에 풀립니다"라고
+ * 말하면 1분이면 될 일을 내일까지 기다리게 만듭니다.
+ */
+async function toStreamError(c: Classified, model: string, label: string): Promise<StreamError> {
+  const base: StreamError = { kind: c.kind, model, message: humanMessage(c, label) };
+  if (c.kind !== "daily") return base;
+
+  const { nextReset } = await getPtBounds();
+  return nextReset ? { ...base, resetAt: nextReset } : base;
+}
 
 /* ============================================================
    사용량 읽기
@@ -148,14 +163,11 @@ export async function generate(opts: CallOptions): Promise<GenerateResult> {
   }
 
   const label = await labelOf(model);
-  return {
-    ok: false,
-    error: {
-      kind: last?.kind ?? "other",
-      model,
-      message: last ? humanMessage(last, label) : "알 수 없는 오류",
-    },
-  };
+  const error = last
+    ? await toStreamError(last, model, label)
+    : { kind: "other" as const, model, message: "알 수 없는 오류" };
+
+  return { ok: false, error };
 }
 
 /* ============================================================
@@ -204,7 +216,7 @@ export async function streamGenerate(opts: CallOptions): Promise<ReadableStream<
           },
           db ?? undefined,
         );
-        const payload: StreamError = { kind: c.kind, model, message: humanMessage(c, label) };
+        const payload = await toStreamError(c, model, label);
         send(`\n${ERROR_MARK}${JSON.stringify(payload)}`);
       };
 
