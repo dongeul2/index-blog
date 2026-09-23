@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { highlightLines } from "@/lib/highlight";
+import { Button } from "@/components/ui/button";
 
 type Props = {
   code: string;
@@ -33,16 +34,23 @@ export function CodeBlock({ code, lang, filename, highlight = [] }: Props) {
   const hl = new Set(highlight);
 
   return (
-    <figure className="code-block">
+    <figure className="code-block group">
       <div className="code-block__head">
         <span>{filename}</span>
-        <button
+        {/* hover·focus에서만 드러납니다 — 읽는 동안에는 조용해야 합니다 */}
+        <Button
           type="button"
+          variant="ghost"
+          size="xs"
           onClick={copy}
-          className={copied ? "copy-btn copy-btn--copied" : "copy-btn"}
+          className={
+            copied
+              ? "h-6 border-accent px-2 text-accent opacity-100"
+              : "h-6 border-border px-2 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+          }
         >
           {copied ? "복사됨" : "복사"}
-        </button>
+        </Button>
       </div>
 
       {/* 가로 스크롤을 키보드로도 움직일 수 있어야 합니다 */}

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getPosts, tagCounts } from "@/lib/posts";
+import { Chip, ChipCount } from "@/components/ui/chip";
 
 export const metadata: Metadata = {
   title: "태그",
@@ -26,11 +27,13 @@ export default async function TagsPage() {
       <ul className="tag-cloud">
         {tags.map((t) => (
           <li key={t.value}>
-            <Link href={`/tags/${encodeURIComponent(t.value)}`} className="chip">
-              #{t.value}
-              <span className="chip__count">{t.count}</span>
-              <span className="sr-only">, 글 {t.count}편</span>
-            </Link>
+            <Chip asChild>
+              <Link href={`/tags/${encodeURIComponent(t.value)}`}>
+                #{t.value}
+                <ChipCount>{t.count}</ChipCount>
+                <span className="sr-only">, 글 {t.count}편</span>
+              </Link>
+            </Chip>
             {/* 빈도를 시각적으로도 한 줄 — 괘선 길이로만 */}
             <span
               className="tag-cloud__bar"

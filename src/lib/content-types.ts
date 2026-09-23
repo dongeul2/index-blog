@@ -65,6 +65,10 @@ export function isCategory(v: string | undefined): v is Category {
   return v === "devlog" || v === "video" || v === "essay";
 }
 
+export function isSource(v: string | undefined): v is Source {
+  return v === "manual" || v === "youtube-summary" || v === "slack-claude-code";
+}
+
 /** 필터 상태를 쿼리 문자열로. 값이 없는 축은 아예 빼서 URL을 짧게 유지합니다. */
 export function archiveHref(filters: Filters & { page?: number }): string {
   const q = new URLSearchParams();

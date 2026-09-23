@@ -5,6 +5,7 @@ import { LoadMore } from "@/components/load-more";
 import { PostCard } from "@/components/post-card";
 import { Section } from "@/components/section";
 import { archiveHref, postsOfTag, relatedTags, tagCounts } from "@/lib/posts";
+import { Chip, ChipCount } from "@/components/ui/chip";
 
 type Params = { tag: string };
 
@@ -47,14 +48,12 @@ export default async function TagPage({ params }: { params: Promise<Params> }) {
             <p className="tag-head__related-label">함께 쓰인 태그</p>
             <div className="tag-head__related-chips">
               {related.map((t) => (
-                <Link
-                  key={t.value}
-                  href={`/tags/${encodeURIComponent(t.value)}`}
-                  className="chip"
-                >
-                  #{t.value}
-                  <span className="chip__count">{t.count}</span>
-                </Link>
+                <Chip key={t.value} asChild>
+                  <Link href={`/tags/${encodeURIComponent(t.value)}`}>
+                    #{t.value}
+                    <ChipCount>{t.count}</ChipCount>
+                  </Link>
+                </Chip>
               ))}
             </div>
           </div>

@@ -1,5 +1,9 @@
 import Link from "next/link";
 import { archiveHref, type Filters } from "@/lib/content-types";
+import {
+  Pagination as PaginationRoot,
+  PaginationItem,
+} from "@/components/ui/pagination";
 
 /**
  * 아카이브 페이지네이션.
@@ -19,32 +23,34 @@ export function Pagination({
   const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
 
   return (
-    <div className="pagination" role="group" aria-label="아카이브 페이지">
+    <PaginationRoot aria-label="아카이브 페이지" className="mt-12">
       {current > 1 && (
-        <Link href={archiveHref({ ...filters, page: current - 1 })} className="pagination__step">
-          이전
-        </Link>
+        <PaginationItem asChild variant="step">
+          <Link href={archiveHref({ ...filters, page: current - 1 })}>이전</Link>
+        </PaginationItem>
       )}
 
       {pages.map((p) =>
         p === current ? (
-          <span key={p} className="pagination__page pagination__page--current" aria-current="page">
+          <PaginationItem key={p} variant="current" aria-current="page">
             {p}
             <span className="sr-only">페이지, 현재 페이지</span>
-          </span>
+          </PaginationItem>
         ) : (
-          <Link key={p} href={archiveHref({ ...filters, page: p })} className="pagination__page">
-            {p}
-            <span className="sr-only">페이지</span>
-          </Link>
+          <PaginationItem key={p} asChild>
+            <Link href={archiveHref({ ...filters, page: p })}>
+              {p}
+              <span className="sr-only">페이지</span>
+            </Link>
+          </PaginationItem>
         ),
       )}
 
       {current < totalPages && (
-        <Link href={archiveHref({ ...filters, page: current + 1 })} className="pagination__step">
-          다음
-        </Link>
+        <PaginationItem asChild variant="step">
+          <Link href={archiveHref({ ...filters, page: current + 1 })}>다음</Link>
+        </PaginationItem>
       )}
-    </div>
+    </PaginationRoot>
   );
 }

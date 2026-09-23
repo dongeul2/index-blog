@@ -36,18 +36,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="ko" suppressHydrationWarning>
       <head>
-        <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        {/* [91]은 Pretendard 동적 서브셋 중 기본 라틴 + 최빈 한글이 든 조각입니다.
+            첫 화면 글자 대부분이 여기에 있어, 이것만 미리 받아 두면 FOUT이 거의 사라집니다. */}
         <link
-          rel="stylesheet"
-          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
-        />
-        {/* 이 규칙은 Pages Router의 _document를 겨냥한 것이라 App Router에서는 해당하지 않습니다.
-            폰트 로딩 방식은 디자인 시스템이 지정한 그대로 둡니다. */}
-        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap"
+          rel="preload"
+          as="font"
+          type="font/woff2"
+          href="/fonts/pretendard/PretendardVariable.subset.91.woff2"
+          crossOrigin=""
         />
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       </head>

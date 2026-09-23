@@ -3,6 +3,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { SignInWithGitHub } from "./sign-in";
 import { getViewer } from "@/lib/auth";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
   title: "로그인",
@@ -51,15 +53,17 @@ export default async function LoginPage({
         <SignInWithGitHub next={next} />
 
         {message && (
-          <div className="callout callout--warn login__alert" role="alert">
-            <strong className="callout__label">로그인할 수 없습니다</strong>
-            <p>{message}</p>
-          </div>
+          <Alert variant="danger" className="mt-6 text-left">
+            <AlertTitle>로그인할 수 없습니다</AlertTitle>
+            <AlertDescription>{message}</AlertDescription>
+          </Alert>
         )}
 
         {viewer && !viewer.isAdmin && (
           <form action="/auth/signout" method="post" className="login__switch">
-            <button type="submit">다른 계정으로 로그인하기</button>
+            <Button type="submit" variant="link" size="sm" className="px-0">
+              다른 계정으로 로그인하기
+            </Button>
           </form>
         )}
 

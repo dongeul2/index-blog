@@ -17,12 +17,13 @@ export const STATUS_LABEL: Record<PostStatus, string> = {
 };
 
 /** 초안만 점선, 나머지는 기존 색 토큰에 매핑 (디자인 시스템 규칙) */
-export const STATUS_BADGE: Record<PostStatus, string> = {
-  draft: "badge badge--draft",
-  queued: "badge badge--queued",
-  published: "badge badge--published",
-  failed: "badge badge--failed",
-};
+/** `<Badge variant>` 로 그대로 넘깁니다 — 클래스 문자열을 손으로 잇지 않습니다. */
+export const STATUS_BADGE = {
+  draft: "draft",
+  queued: "queued",
+  published: "published",
+  failed: "failed",
+} as const satisfies Record<PostStatus, PostStatus>;
 
 export const isStatus = (v: string): v is PostStatus =>
   v === "draft" || v === "published" || v === "queued" || v === "failed";

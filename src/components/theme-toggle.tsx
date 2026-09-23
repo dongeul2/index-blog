@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { Switch } from "@/components/ui/switch";
 
 type Theme = "dark" | "light";
 
@@ -27,30 +28,25 @@ export function ThemeToggle() {
   const theme = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const isDark = theme === "dark";
 
-  function toggle() {
-    const next: Theme = isDark ? "light" : "dark";
-    if (next === "light") document.documentElement.dataset.theme = "light";
+  function toggle(next: boolean) {
+    const theme: Theme = next ? "dark" : "light";
+    if (theme === "light") document.documentElement.dataset.theme = "light";
     else delete document.documentElement.dataset.theme;
     try {
-      localStorage.theme = next;
+      localStorage.theme = theme;
     } catch {
       // 저장 실패는 무시합니다 — 이번 세션에만 적용됩니다.
     }
   }
 
   return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={isDark}
+    /* Radix Switch가 role="switch" + aria-checked를 맡습니다.
+       히트 영역 44×44는 컨트롤을 키우는 대신 `before:`로 넓힙니다 — 괘선 폭은 그대로 둡니다. */
+    <Switch
+      checked={isDark}
+      onCheckedChange={toggle}
       aria-label="다크 모드"
-      className="theme-toggle"
-      onClick={toggle}
-    >
-      <span className="theme-toggle__track" aria-hidden="true">
-        <span className="theme-toggle__knob" />
-      </span>
-      <span className="sr-only">{isDark ? "다크 모드 켜짐" : "라이트 모드 켜짐"}</span>
-    </button>
+      className="relative before:absolute before:-inset-3 before:content-['']"
+    />
   );
 }

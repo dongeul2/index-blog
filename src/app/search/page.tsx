@@ -6,6 +6,8 @@ import { ProjectCard } from "@/components/project-card";
 import { LoadMore } from "@/components/load-more";
 import { getPosts, postsOfProject, searchPosts } from "@/lib/posts";
 import { searchProjects } from "@/lib/projects";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export const metadata: Metadata = {
   title: "검색",
@@ -39,18 +41,16 @@ export default async function SearchPage({
           <label className="sr-only" htmlFor="q">
             글과 프로젝트 검색
           </label>
-          <input
+          <Input
             id="q"
             name="q"
             type="search"
             defaultValue={q}
             placeholder="글 제목, 태그, 프로젝트"
-            className="search-page__input"
+            className="h-11 flex-1 border-accent text-base"
             autoComplete="off"
           />
-          <button type="submit" className="search-page__submit">
-            검색
-          </button>
+          <Button type="submit">검색</Button>
         </form>
 
         <p className="search-page__count" role="status" aria-live="polite">

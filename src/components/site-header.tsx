@@ -7,6 +7,7 @@ import { SiteSearch } from "./site-search";
 import { ThemeToggle } from "./theme-toggle";
 import { useReadingTitle } from "./reading-title";
 import type { SearchItem } from "@/lib/search-index";
+import { Button } from "@/components/ui/button";
 
 const NAV = [
   { href: "/", label: "홈" },
@@ -63,9 +64,9 @@ export function SiteHeader({ searchIndex }: { searchIndex: SearchItem[] }) {
               사이트 보기
             </Link>
             <form action="/auth/signout" method="post">
-              <button type="submit" className="nav-link nav-link--button">
+              <Button type="submit" variant="link" size="xs" className="px-0 text-text-2 hover:text-accent">
                 나가기
-              </button>
+              </Button>
             </form>
           </div>
         ) : (

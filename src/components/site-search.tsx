@@ -4,6 +4,8 @@ import { useEffect, useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Highlighted } from "./highlighted";
 import { KIND_LABEL, searchIndex, type SearchItem } from "@/lib/search-index";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 /** 마지막 줄은 결과 페이지로 넘어가는 동작입니다. */
 type Row = (SearchItem & { all?: false }) | { all: true; href: string; title: string };
@@ -104,23 +106,25 @@ export function SiteSearch({ index }: { index: SearchItem[] }) {
 
   return (
     <div className="search" ref={rootRef}>
-      <button
+      <Button
         type="button"
         ref={triggerRef}
-        className="search__trigger"
+        variant="ghost"
+        size="xs"
+        className="gap-2 border-border text-text-2 hover:border-border-strong"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-haspopup="dialog"
       >
         검색 <span aria-hidden="true">⌘K</span>
         <span className="sr-only">, 단축키 커맨드 K</span>
-      </button>
+      </Button>
 
       {open && (
         <div className="search__panel">
-          <input
+          <Input
             ref={inputRef}
-            className="search__input"
+            className="h-11 border-accent text-base"
             type="text"
             role="combobox"
             aria-expanded="true"

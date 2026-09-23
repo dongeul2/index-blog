@@ -6,6 +6,7 @@ import {
   type Category,
   type Filters,
 } from "@/lib/posts";
+import { Chip, ChipCount } from "@/components/ui/chip";
 
 type Row = {
   label: string;
@@ -83,31 +84,26 @@ export async function FilterBar({ filters }: { filters: Filters }) {
         <div className="filters__row" key={row.label}>
           <p className="filters__label">{row.label}</p>
           <div className="filters__chips">
-            <Link
-              href={row.allHref}
-              className="chip"
-              aria-current={row.active ? undefined : "page"}
-            >
-              전체
-            </Link>
+            <Chip asChild variant={row.active ? "default" : "active"}>
+              <Link href={row.allHref} aria-current={row.active ? undefined : "page"}>
+                전체
+              </Link>
+            </Chip>
             {row.options.map((o) =>
               // 결과가 0인 선택지는 눌러도 빈 화면이 될 뿐이라 링크로 만들지 않습니다.
               // (pointer-events로만 막으면 키보드로는 여전히 눌려서 동작이 어긋납니다.)
               o.count === 0 && !o.on ? (
-                <span key={o.key} className="chip chip--off" aria-disabled="true">
+                <Chip key={o.key} variant="off" aria-disabled="true">
                   {o.text}
-                  <span className="chip__count">{o.count}</span>
-                </span>
+                  <ChipCount>{o.count}</ChipCount>
+                </Chip>
               ) : (
-                <Link
-                  key={o.key}
-                  href={o.href}
-                  className="chip"
-                  aria-current={o.on ? "page" : undefined}
-                >
-                  {o.text}
-                  <span className="chip__count">{o.count}</span>
-                </Link>
+                <Chip key={o.key} asChild variant={o.on ? "active" : "default"}>
+                  <Link href={o.href} aria-current={o.on ? "page" : undefined}>
+                    {o.text}
+                    <ChipCount>{o.count}</ChipCount>
+                  </Link>
+                </Chip>
               ),
             )}
           </div>

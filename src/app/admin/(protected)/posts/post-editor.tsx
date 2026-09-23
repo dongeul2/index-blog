@@ -8,6 +8,28 @@ import { parseMarkdown, prepare, readingMinutes } from "@/lib/markdown";
 import { CATEGORIES, CATEGORY_LABEL, type Category, type Source } from "@/lib/content-types";
 import { STATUS_LABEL, type PostStatus } from "@/lib/post-status";
 import { deletePost, savePost, type PostInput } from "./actions";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Field, FieldDescription, FieldGroup, FieldLabel, FieldRow } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 
 const SOURCES: { value: Source; label: string }[] = [
   { value: "manual", label: "직접 씀" },
@@ -77,6 +99,7 @@ export function PostEditor({ post }: { post: EditorPost }) {
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const initial = post.publishedAt ? seoulParts(post.publishedAt) : { date: "", time: "" };
   const [date, setDate] = useState(initial.date);
@@ -85,7 +108,6 @@ export function PostEditor({ post }: { post: EditorPost }) {
   const editorRef = useRef<HTMLTextAreaElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
   const syncing = useRef<"editor" | "preview" | null>(null);
-  const dialogRef = useRef<HTMLDialogElement>(null);
 
   const set = <K extends keyof EditorPost>(key: K, value: EditorPost[K]) => {
     setDraft((d) => ({ ...d, [key]: value }));
@@ -157,7 +179,7 @@ export function PostEditor({ post }: { post: EditorPost }) {
   }
 
   async function remove() {
-    dialogRef.current?.close();
+    setConfirmOpen(false);
     if (!draft.originalSlug) return;
     setBusy(true);
     const result = await deletePost(draft.originalSlug);
@@ -185,8 +207,8 @@ export function PostEditor({ post }: { post: EditorPost }) {
           </p>
         </div>
 
-        <input
-          className="editor__title"
+        <Input
+          className="mt-3 h-auto rounded-none border-0 border-b border-transparent bg-transparent px-0 py-1 text-[2rem] leading-[1.18] font-extrabold tracking-[-0.035em] text-text placeholder:text-border-strong focus:border-b-accent focus-visible:outline-offset-4"
           value={draft.title}
           onChange={(e) => set("title", e.target.value)}
           placeholder="제목"
@@ -194,136 +216,160 @@ export function PostEditor({ post }: { post: EditorPost }) {
         />
 
         {error && (
-          <div className="callout callout--warn editor__error" role="alert">
-            <strong className="callout__label">저장하지 못했습니다</strong>
-            <p>{error}</p>
-          </div>
+          <Alert variant="danger" className="mt-4 max-w-(--container-prose)">
+            <AlertTitle>저장하지 못했습니다</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         )}
       </header>
 
       {/* ---------- 메타 ---------- */}
-      <div className="editor__meta">
-        <label className="field">
-          <span className="field__label">주소 (slug)</span>
-          <input
+      <FieldGroup className="mt-6">
+        <Field>
+          <FieldLabel htmlFor="post-slug">주소 (slug)</FieldLabel>
+          <Input
+            id="post-slug"
             value={draft.slug}
             onChange={(e) => set("slug", e.target.value)}
             placeholder="toc-observer"
-            className="field__input field__input--mono"
+            className="font-mono text-[0.8125rem]"
           />
-          <span className="field__hint">영소문자·숫자·하이픈만</span>
-        </label>
+          <FieldDescription>영소문자·숫자·하이픈만</FieldDescription>
+        </Field>
 
-        <label className="field">
-          <span className="field__label">분류</span>
-          <select
-            value={draft.category}
-            onChange={(e) => set("category", e.target.value as Category)}
-            className="field__input"
-          >
-            {CATEGORIES.map((c) => (
-              <option key={c} value={c}>
-                {CATEGORY_LABEL[c]}
-              </option>
-            ))}
-          </select>
-        </label>
+        <Field>
+          <FieldLabel htmlFor="post-category">분류</FieldLabel>
+          <Select value={draft.category} onValueChange={(v) => set("category", v as Category)}>
+            <SelectTrigger id="post-category">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {CATEGORIES.map((c) => (
+                <SelectItem key={c} value={c}>
+                  {CATEGORY_LABEL[c]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
 
-        <label className="field">
-          <span className="field__label">상태</span>
-          <select
-            value={draft.status}
-            onChange={(e) => set("status", e.target.value as PostStatus)}
-            className="field__input"
-          >
-            {STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {STATUS_LABEL[s]}
-              </option>
-            ))}
-          </select>
-        </label>
+        <Field>
+          <FieldLabel htmlFor="post-status">상태</FieldLabel>
+          <Select value={draft.status} onValueChange={(v) => set("status", v as PostStatus)}>
+            <SelectTrigger id="post-status">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {STATUSES.map((st) => (
+                <SelectItem key={st} value={st}>
+                  {STATUS_LABEL[st]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
 
-        <label className="field">
-          <span className="field__label">출처</span>
-          <select
-            value={draft.source}
-            onChange={(e) => set("source", e.target.value as Source)}
-            className="field__input"
-          >
-            {SOURCES.map((s) => (
-              <option key={s.value} value={s.value}>
-                {s.label}
-              </option>
-            ))}
-          </select>
-          <span className="field__hint">
+        <Field>
+          <FieldLabel htmlFor="post-source">출처</FieldLabel>
+          <Select value={draft.source} onValueChange={(v) => set("source", v as Source)}>
+            <SelectTrigger id="post-source">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {SOURCES.map((src) => (
+                <SelectItem key={src.value} value={src.value}>
+                  {src.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <FieldDescription>
             {draft.source === "manual" ? "직접 쓴 글" : "자동 생성으로 표기됩니다"}
-          </span>
-        </label>
+          </FieldDescription>
+        </Field>
 
-        <label className="field field--wide">
-          <span className="field__label">태그</span>
-          <input
+        <Field wide>
+          <FieldLabel htmlFor="post-tags">태그</FieldLabel>
+          <Input
+            id="post-tags"
             value={draft.tags}
             onChange={(e) => set("tags", e.target.value)}
             placeholder="react, 접근성, toc"
-            className="field__input"
           />
-          <span className="field__hint">쉼표로 구분</span>
-        </label>
+          <FieldDescription>쉼표로 구분</FieldDescription>
+        </Field>
 
-        <label className="field field--wide">
-          <span className="field__label">요약</span>
-          <input
+        <Field wide>
+          <FieldLabel htmlFor="post-summary">요약</FieldLabel>
+          <Input
+            id="post-summary"
             value={draft.summary}
             onChange={(e) => set("summary", e.target.value)}
             placeholder="목록과 검색에 쓰이는 한 줄"
-            className="field__input"
           />
-        </label>
+        </Field>
 
-        <label className="field">
-          <span className="field__label">프로젝트</span>
-          <input
+        <Field>
+          <FieldLabel htmlFor="post-project">프로젝트</FieldLabel>
+          <Input
+            id="post-project"
             value={draft.project}
             onChange={(e) => set("project", e.target.value)}
             placeholder="index-blog"
-            className="field__input field__input--mono"
+            className="font-mono text-[0.8125rem]"
           />
-        </label>
+        </Field>
 
-        <label className="field">
-          <span className="field__label">채널 / 출처 ID</span>
-          <input
+        <Field>
+          <FieldLabel htmlFor="post-source-ref">출처 ID (영상)</FieldLabel>
+          <Input
+            id="post-source-ref"
             value={draft.sourceRef}
             onChange={(e) => set("sourceRef", e.target.value)}
             placeholder="dQw4w9WgXcQ"
-            className="field__input field__input--mono"
+            className="font-mono text-[0.8125rem]"
           />
-        </label>
+          <FieldDescription>
+            영상 브라우즈가 「이미 글로 정리함」을 판정하는 값입니다.
+          </FieldDescription>
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor="post-channel">채널 ID</FieldLabel>
+          <Input
+            id="post-channel"
+            value={draft.channel}
+            onChange={(e) => set("channel", e.target.value)}
+            placeholder="UC…"
+            className="font-mono text-[0.8125rem]"
+          />
+          <FieldDescription>홈의 「요즘 보는 것」이 이 값으로 글을 묶습니다.</FieldDescription>
+        </Field>
 
         {/* 발행일 편집 */}
-        <div className="field field--wide">
-          <span className="field__label">발행 시각 (서울)</span>
-          <div className="editor__when">
-            <input
+        <Field wide>
+          <FieldLabel htmlFor="post-date">발행 시각 (서울)</FieldLabel>
+          <div className="flex flex-wrap items-center gap-2">
+            <Input
+              id="post-date"
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="field__input"
+              className="w-auto flex-none"
               aria-label="발행 날짜"
             />
-            <input
+            <Input
               type="time"
               value={time}
               onChange={(e) => setTime(e.target.value)}
-              className="field__input"
+              className="w-auto flex-none"
               aria-label="발행 시각"
             />
-            <button
+            <Button
               type="button"
-              className="editor__now"
+              variant="outline"
+              size="xs"
+              className="h-10 border-border"
               onClick={() => {
                 const now = seoulParts(new Date().toISOString());
                 setDate(now.date);
@@ -331,24 +377,24 @@ export function PostEditor({ post }: { post: EditorPost }) {
               }}
             >
               지금으로 설정
-            </button>
-            {scheduled && <span className="badge badge--scheduled">예약 발행</span>}
+            </Button>
+            {scheduled && <Badge variant="scheduled">예약 발행</Badge>}
           </div>
-          <span className="field__hint" role="status" aria-live="polite">
+          <FieldDescription role="status" aria-live="polite">
             {scheduled
               ? "미래 시각입니다. 그 시각이 될 때까지 공개 화면에 보이지 않습니다."
               : "비워 두면 초안으로만 남습니다."}
-          </span>
-        </div>
-      </div>
+          </FieldDescription>
+        </Field>
+      </FieldGroup>
 
       {/* ---------- 50:50 분할 ---------- */}
       <div className="split">
         <div className="split__pane">
           <p className="split__label">마크다운</p>
-          <textarea
+          <Textarea
             ref={editorRef}
-            className="split__editor"
+            className="h-[min(60vh,40rem)] resize-none overflow-y-auto rounded-none border-0 bg-code-bg p-5 font-mono text-code leading-[1.75] text-code-fg [tab-size:2] focus-visible:outline-offset-[-2px]"
             value={draft.body}
             onChange={(e) => set("body", e.target.value)}
             onScroll={() => sync("editor")}
@@ -374,45 +420,46 @@ export function PostEditor({ post }: { post: EditorPost }) {
 
       {/* ---------- 액션 ---------- */}
       <div className="editor__actions">
-        <label className="editor__confirm">
-          <input
-            type="checkbox"
+        <FieldRow>
+          <Checkbox
+            id="preview-confirmed"
             checked={confirmed}
-            onChange={(e) => setConfirmed(e.target.checked)}
+            onCheckedChange={(v) => setConfirmed(v === true)}
           />
-          <span>미리보기를 확인했습니다</span>
-        </label>
+          <FieldLabel htmlFor="preview-confirmed" className="font-sans text-sm tracking-normal">
+            미리보기를 확인했습니다
+          </FieldLabel>
+        </FieldRow>
 
-        <div className="editor__buttons">
+        <div className="flex flex-wrap gap-2">
           {draft.originalSlug && (
-            <button
+            <Button
               type="button"
-              className="editor__danger"
-              onClick={() => dialogRef.current?.showModal()}
+              variant="destructive"
+              onClick={() => setConfirmOpen(true)}
               disabled={busy}
             >
               버리기
-            </button>
+            </Button>
           )}
 
-          <button
+          <Button
             type="button"
-            className="editor__secondary"
+            variant="outline"
             onClick={() => void save({ status: "draft" })}
             disabled={busy}
           >
             초안 저장
-          </button>
+          </Button>
 
-          <button
+          <Button
             type="button"
-            className="editor__primary"
             onClick={() => void save({ status: "published" })}
             disabled={busy || !confirmed || !publishedAt}
             aria-describedby="publish-hint"
           >
             {scheduled ? "예약 발행" : "발행"}
-          </button>
+          </Button>
         </div>
 
         <p className="editor__hint" id="publish-hint">
@@ -426,22 +473,27 @@ export function PostEditor({ post }: { post: EditorPost }) {
         </p>
       </div>
 
-      {/* 파괴적 액션은 확인을 거칩니다. <dialog>가 포커스 가둠과 ESC를 맡습니다. */}
-      <dialog ref={dialogRef} className="modal elevated">
-        <h2 className="modal__title">이 글을 지울까요?</h2>
-        <p className="modal__body">
-          <strong>{draft.title || draft.slug}</strong> 을(를) 되돌릴 수 없이 지웁니다.
-        </p>
-        <div className="modal__actions">
-          {/* 파괴적 액션이 기본값이 되지 않도록 취소에 먼저 포커스가 갑니다 */}
-          <button type="button" autoFocus onClick={() => dialogRef.current?.close()}>
-            취소
-          </button>
-          <button type="button" className="editor__danger" onClick={() => void remove()}>
-            지우기
-          </button>
-        </div>
-      </dialog>
+      {/* 파괴적 액션은 확인을 거칩니다. Dialog가 포커스 가둠과 ESC를 맡습니다. */}
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>이 글을 지울까요?</DialogTitle>
+            <DialogDescription>
+              <strong className="font-semibold text-text">{draft.title || draft.slug}</strong> 을(를)
+              되돌릴 수 없이 지웁니다.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            {/* 파괴적 액션이 기본값이 되지 않도록 취소에 먼저 포커스가 갑니다 */}
+            <Button type="button" variant="outline" autoFocus onClick={() => setConfirmOpen(false)}>
+              취소
+            </Button>
+            <Button type="button" variant="destructive" onClick={() => void remove()}>
+              지우기
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

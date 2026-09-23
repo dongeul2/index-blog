@@ -1,4 +1,6 @@
 @import "tailwindcss";
+/* Pretendard · JetBrains Mono — 셀프 호스팅(public/fonts). CDN을 타지 않습니다. */
+@import "./fonts.css";
 
 /* ============================================================
    기록실(INDEX.) — 디자인 시스템 토큰
@@ -408,6 +410,10 @@
   }
   a:hover .media-frame img,
   a:focus-visible .media-frame img { filter: brightness(1); }
+  /* 이미지만 살짝 확대(동적인 느낌) — 실제 재생되는 iframe은 확대하지 않습니다 */
+  .media-frame img { transition: filter 120ms ease, transform 400ms ease; }
+  a:hover .media-frame img,
+  a:focus-visible .media-frame img { transform: scale(1.04); }
   /* 길이 라벨 등 이미지 위 텍스트 */
   .media-frame__label {
     position: absolute;
@@ -568,6 +574,32 @@
     animation: caret-blink 1s steps(2) infinite;
   }
   @keyframes caret-blink { 50% { opacity: 0; } }
+
+  /* ---------- 홈 전용 모션 ----------
+     prefers-reduced-motion은 위쪽 전역 규칙(transition/animation-duration: 0.01ms)이
+     이미 처리하므로 여기서 따로 분기하지 않습니다. */
+
+  /* 스크롤로 들어오면 살짝 떠오르며 나타납니다 */
+  .reveal {
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 500ms ease, transform 500ms ease;
+  }
+  .reveal--visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* 활동 스파크라인 막대 — 부모(.reveal)가 보이기 전까지 0으로 대기하다가 자랍니다.
+     컴포넌트 자신은 애니메이션 여부를 모릅니다 — 조상 클래스가 있을 때만 규칙이 켜집니다. */
+  .spark-bar { transform: scaleY(0); transform-origin: bottom; }
+  .reveal--visible .spark-bar { animation: grow-y 450ms ease forwards; }
+  @keyframes grow-y { to { transform: scaleY(1); } }
+
+  /* 태그 리듬 막대 — 같은 방식, 가로로 */
+  .tag-bar { transform: scaleX(0); transform-origin: left; }
+  .reveal--visible .tag-bar { animation: grow-x 450ms ease forwards; }
+  @keyframes grow-x { to { transform: scaleX(1); } }
 
   /* 오프라인 바 */
   .offline-bar {
@@ -1046,6 +1078,10 @@
     border-color: var(--color-border-strong);
     text-decoration: none;
   }
+  /* 영상요약 글의 썸네일 — 메타·본문 두 열을 다 차지하는 첫 행 */
+  .post-card__thumb {
+    grid-column: 1 / -1;
+  }
   .post-card__meta {
     display: flex;
     flex-wrap: wrap;
@@ -1269,13 +1305,18 @@
     background: var(--color-bg);
     padding: 1.25rem;
     text-decoration: none;
-    transition: background-color 120ms ease, border-color 120ms ease;
+    transition: background-color 120ms ease, border-color 120ms ease, transform 300ms ease;
   }
   .project-card:hover,
   .project-card:focus-within {
     background: var(--color-bg-subtle);
     border-color: var(--color-border-strong);
     text-decoration: none;
+    transform: translateY(-2px);
+  }
+  /* 카드 패딩을 상쇄해 이미지가 가장자리까지 — 관리자가 URL을 넣은 프로젝트만 보입니다 */
+  .project-card__cover {
+    margin: -1.25rem -1.25rem 1rem;
   }
   .project-card__top {
     display: flex;
@@ -2479,4 +2520,125 @@
   .check--taken { color: var(--color-danger); }
 
   .repo-facts__none { color: var(--color-text-muted); }
+}
+
+/* ============================================================
+   2단계 — 저장소 동기화 · 공개 여부
+   ============================================================ */
+@layer components {
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 2.5rem;
+    font-size: 0.875rem;
+    color: var(--color-text-2);
+  }
+  .toggle-row input { width: 1rem; height: 1rem; accent-color: var(--color-accent); }
+
+  .sync-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    padding: 1rem 0;
+    border-top: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+  }
+  .sync-bar__state { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; }
+  .sync-bar__when {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    color: var(--color-text-muted);
+  }
+  .sync-note {
+    margin-top: 1rem;
+    padding: 0.75rem 0.875rem;
+    border: 1px solid var(--color-border);
+    border-left: 3px solid var(--color-cat-essay);
+    background: var(--color-bg-subtle);
+    font-size: 0.8125rem;
+    color: var(--color-text-2);
+  }
+}
+
+/* ============================================================
+   3단계 — 작업 요약
+   ============================================================ */
+@layer components {
+  .sync-bar__actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .sync-bar__link {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+  }
+  .sync-bar__link:hover { text-decoration: none; }
+
+  .summarize__commits { margin-top: 2rem; }
+  .summarize__list {
+    list-style: none;
+    margin-top: 0.75rem;
+    border-top: 1px solid var(--color-border);
+    max-height: 20rem;
+    overflow-y: auto;
+  }
+  .summarize__commit {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    padding: 0.5rem 0.25rem;
+    border-bottom: 1px solid var(--color-border);
+    font-size: 0.875rem;
+    cursor: pointer;
+  }
+  .summarize__commit:hover { background: var(--color-bg-subtle); }
+  .summarize__commit input { accent-color: var(--color-accent); }
+  /* 뺀 커밋은 색만이 아니라 취소선으로도 알립니다 */
+  .summarize__commit:has(input:not(:checked)) .repo-item__msg {
+    color: var(--color-text-muted);
+    text-decoration: line-through;
+  }
+
+  .summarize__memo { margin-top: 2rem; }
+  .summarize__memo-input { height: 8rem; border: 1px solid var(--color-border); }
+
+  .summarize__cost {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    padding: 1rem 0;
+    border-top: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+  }
+  .summarize__cost-text { font-size: 0.8125rem; color: var(--color-text-2); }
+  .summarize__cost-note { color: var(--color-text-muted); }
+
+  .summarize__result { margin-top: 2rem; border: 1px solid var(--color-border); }
+  .summarize__preview {
+    padding: 1.5rem;
+    max-height: 40rem;
+    overflow-y: auto;
+  }
+  .summarize__title {
+    font-size: var(--text-h2);
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    color: var(--color-text);
+  }
+  .summarize__summary {
+    margin-top: 0.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--color-border);
+    font-size: 0.9375rem;
+    color: var(--color-text-2);
+  }
+  .summarize__keep {
+    justify-content: flex-end;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--color-border);
+  }
 }

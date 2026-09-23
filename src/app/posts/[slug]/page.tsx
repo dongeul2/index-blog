@@ -14,6 +14,8 @@ import {
   getPostTree,
   getPosts,
 } from "@/lib/posts";
+import { Badge } from "@/components/ui/badge";
+import { Chip } from "@/components/ui/chip";
 
 type Params = { slug: string };
 
@@ -56,10 +58,10 @@ export default async function PostPage({ params }: { params: Promise<Params> }) 
             </p>
           )}
 
-          <span className={`badge badge--${post.category}`}>
+          <Badge variant={post.category}>
             {CATEGORY_LABEL[post.category]}
             <span className="sr-only">분류: {CATEGORY_LABEL[post.category]}</span>
-          </span>
+          </Badge>
 
           <h1>{post.title}</h1>
 
@@ -83,12 +85,27 @@ export default async function PostPage({ params }: { params: Promise<Params> }) 
 
           <div className="post-head__tags">
             {post.tags.map((t) => (
-              <Link key={t} href={`/tags/${encodeURIComponent(t)}`} className="chip">
-                #{t}
-              </Link>
+              <Chip key={t} asChild>
+                <Link href={`/tags/${encodeURIComponent(t)}`}>#{t}</Link>
+              </Chip>
             ))}
           </div>
         </header>
+
+        {/* 영상요약 글만 — 이 글이 실제로 다루는 영상이라 장식이 아니라 본문의 일부입니다.
+            .media-frame은 hover로 밝아지는 썸네일용이라(항상 어둡게 남음), 실제 재생되는
+            플레이어는 admin 시청 화면(13)과 같은 방식으로 처음부터 정상 밝기로 둡니다. */}
+        {post.category === "video" && post.sourceRef && (
+          <div className="post-head__video relative mt-8 aspect-video w-full overflow-hidden border border-border bg-media">
+            <iframe
+              src={`https://www.youtube-nocookie.com/embed/${post.sourceRef}`}
+              title={post.title}
+              className="size-full border-0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        )}
 
         {post.headings.length > 0 && <Toc headings={post.headings} />}
 

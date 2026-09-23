@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/button";
 
 /**
  * GitHub으로 로그인.
@@ -36,11 +37,11 @@ export function SignInWithGitHub({ next }: { next: string }) {
 
   return (
     <>
-      <button type="button" className="login__submit" onClick={signIn} disabled={pending}>
+      <Button type="button" className="mt-8 w-full" onClick={signIn} disabled={pending}>
         {pending ? "GitHub으로 이동 중…" : "GitHub으로 로그인"}
-      </button>
+      </Button>
 
-      <p className="login__error" role="status" aria-live="polite">
+      <p className="mt-3 min-h-5 text-caption text-danger" role="status" aria-live="polite">
         {error}
       </p>
     </>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
+import { Button } from "@/components/ui/button";
 
 /**
  * 「더 보기」 — 태그·검색 결과에서 씁니다.
@@ -40,15 +41,16 @@ export function LoadMore({
 
       {rest > 0 && (
         <p className="load-more">
-          <button
+          <Button
             type="button"
-            className="load-more__btn"
+            variant="outline"
+            className="gap-2.5"
             aria-describedby={statusId}
             onClick={() => setShown((n) => n + step)}
           >
             {label} {Math.min(step, rest)}건 더 보기
-            <span className="load-more__rest">남은 {rest}건</span>
-          </button>
+            <span className="font-mono text-xs font-normal text-text-muted">남은 {rest}건</span>
+          </Button>
         </p>
       )}
     </>
