@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { RealtimePosts } from "./realtime-posts";
+import { BookmarksWidget } from "./bookmarks-widget";
 import { getViewer } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
 import { CATEGORY_LABEL } from "@/lib/content-types";
 import {
   STATUS_BADGE,
@@ -13,6 +15,8 @@ import {
   type AdminPost,
   type PostStatus,
 } from "@/lib/admin-posts";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
   title: "대시보드",
@@ -35,12 +39,12 @@ function seoulDateTime(iso: string): string {
 function StatusBadge({ post }: { post: AdminPost }) {
   return (
     <span className="queue-row__badges">
-      <span className={STATUS_BADGE[post.status]}>
+      <Badge variant={STATUS_BADGE[post.status]}>
         {STATUS_LABEL[post.status]}
         <span className="sr-only">상태: {STATUS_LABEL[post.status]}</span>
-      </span>
+      </Badge>
       {post.scheduled && post.status === "published" && (
-        <span className="badge badge--scheduled">예약 발행</span>
+        <Badge variant="scheduled">예약 발행</Badge>
       )}
     </span>
   );
@@ -48,6 +52,13 @@ function StatusBadge({ post }: { post: AdminPost }) {
 
 export default async function Dashboard({ searchParams }: { searchParams: Promise<Search> }) {
   const [viewer, posts, sp] = await Promise.all([getViewer(), getAdminPosts(), searchParams]);
+
+  const supabase = await createClient();
+  const { data: bookmarkRows } = await supabase
+    .from("bookmarks")
+    .select("id, url, title")
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
 
   const active = readStatus(sp.status);
   const counts = countByStatus(posts);
@@ -61,15 +72,17 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
             <p className="admin-head__label">ADMIN</p>
             <h1 className="admin-head__title">대시보드</h1>
           </div>
-          <Link href="/admin/posts/new" className="admin-head__primary">
-            새 글
-          </Link>
+          <Button asChild>
+            <Link href="/admin/posts/new">새 글</Link>
+          </Button>
         </div>
 
         <p className="admin-head__who">
           <strong>{viewer?.login}</strong> · 전체 {posts.length}편
         </p>
         <RealtimePosts />
+
+        <BookmarksWidget bookmarks={bookmarkRows ?? []} />
       </header>
 
       {/* 상태별 요약이자 필터. 링크라 URL이 곧 화면입니다. */}
@@ -91,7 +104,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
             aria-current={active === s ? "page" : undefined}
           >
             <span className="status-tile__label">
-              <span className={STATUS_BADGE[s]}>{STATUS_LABEL[s]}</span>
+              <Badge variant={STATUS_BADGE[s]}>{STATUS_LABEL[s]}</Badge>
             </span>
             <span className="status-tile__count">{counts[s]}</span>
           </Link>
@@ -144,9 +157,9 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
               : "아직 글이 없습니다."}
           </p>
           <p className="admin-empty__action">
-            <Link href="/admin/posts/new" className="admin-head__primary">
-              새 글 쓰기
-            </Link>
+            <Button asChild>
+              <Link href="/admin/posts/new">새 글 쓰기</Link>
+            </Button>
           </p>
         </div>
       )}
