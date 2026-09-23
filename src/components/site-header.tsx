@@ -7,6 +7,7 @@ import { SiteSearch } from "./site-search";
 import { ThemeToggle } from "./theme-toggle";
 import { useReadingTitle } from "./reading-title";
 import type { SearchItem } from "@/lib/search-index";
+import { ADMIN_TABS, isAdminTabCurrent } from "@/lib/admin-nav";
 import { Button } from "@/components/ui/button";
 
 const NAV = [
@@ -60,6 +61,19 @@ export function SiteHeader({ searchIndex }: { searchIndex: SearchItem[] }) {
 
         {isAdmin ? (
           <div className="site-nav">
+            {/* 모바일은 하단 탭바가 같은 항목을 보여 주므로, 데스크톱(탭바가 숨는 폭)에서만 */}
+            <nav aria-label="관리자" className="hidden min-[48rem]:contents">
+              {ADMIN_TABS.map((tab) => (
+                <Link
+                  key={tab.href}
+                  href={tab.href}
+                  className="nav-link"
+                  aria-current={isAdminTabCurrent(pathname, tab.href) ? "page" : undefined}
+                >
+                  {tab.label}
+                </Link>
+              ))}
+            </nav>
             <Link href="/" className="nav-link">
               사이트 보기
             </Link>
