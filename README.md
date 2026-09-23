@@ -29,10 +29,41 @@ node --env-file=.env.local scripts/check-rls.mjs    # 공개 키로 RLS가 실�
 | 04 | 검색 결과 | **구현됨** — `/search?q=` (글 + 프로젝트 두 그룹, 「더 보기」) |
 | 05 | 태그 | **구현됨** — `/tags`, `/tags/[tag]` (「더 보기」) |
 | 08 | 404 | **구현됨** — 최근 글 3편으로 회수 |
-| 09~15 | 관리자 `/admin` | 미구현 |
+| 09 | 로그인 | **구현됨** — `/admin/login` (GitHub 단일 사용자) |
+| 10 | 대시보드 | **구현됨** — `/admin` (네 상태 필터 · 실시간 갱신) |
+| 11 | 글 작성·편집 | **구현됨** — `/admin/posts/[slug]` (50:50 분할 · 발행일 편집) |
+| 15 | 프로젝트 생성·연결 | **구현됨** — `/admin/projects` (2모드 · GitHub 동기화) |
+| 12 | 영상 브라우즈 | **구현됨** — `/admin/videos` (채널 칩 · 훑기 피드 · 유닛 표시) |
+| 14 | 채널 구독 관리 | **구현됨** — `/admin/videos/channels` (등록/해지 · 쿼터 현황) |
+| 13 | 영상 시청 + AI 호출 | **구현됨** — `/admin/videos/[videoId]` (재생 · 명령 패널 · 스트리밍 초안) |
 
-**공개 영역 8개 화면 전부 구현했고, 전부 Supabase에서 읽습니다.** 남은 것은 관리자 영역 7개
-(로그인 · 대시보드 · 작성/편집 · 영상 3종 · 프로젝트 연결)입니다.
+**관리자 15개 화면 전부 구현했습니다.** 12에서 영상 카드를 누르면 13(시청 화면)으로
+들어가고, 거기서 재생 + 명령(프리셋 3종 또는 직접 입력) → 스트리밍 초안 → 저장까지
+한 화면에서 끝납니다.
+
+### 영상 훑기는 유닛을 씁니다
+
+`/admin/videos`는 열 때마다 **채널 수 + 1유닛**을 씁니다(채널별 `playlistItems.list` 1유닛 +
+길이·자막을 한 번에 묻는 `videos.list` 1유닛). 13을 열 때마다 영상 하나당 **1유닛**을 더
+씁니다(`videos.list`로 설명까지 받습니다). 같은 일을 `search.list`로 하면 채널당 100유닛입니다.
+화면 위쪽이 이번 훑기 비용과 남은 유닛을 그대로 보여 줍니다 — 숨기면 어느 날 갑자기
+"왜 안 되지"가 됩니다.
+
+### 자막은 비공식 경로라 자주 비어 옵니다 — 그래서 설명으로 대신합니다
+
+YouTube Data API는 임의 채널(구독한 남의 채널)의 자막 텍스트를 주지 않습니다.
+`captions.download`가 유일한 다운로드 경로인데 업로더 본인의 OAuth가 있어야 합니다.
+그래서 `lib/transcript.ts`는 시청 페이지가 브라우저에서 받는 `timedtext` 엔드포인트를
+비공식으로 그대로 부릅니다 — 키도 쿼터도 필요 없지만, **직접 확인해 보니 서버(데이터센터)
+IP에서는 서명된 요청도 자주 200 + 빈 본문으로 막힙니다.** 이건 이 저장소만의 문제가 아니라
+YouTube가 2024~2025년에 걸쳐 강화한 봇 차단의 결과라, 배포 환경에 따라 아예 안 될 수도
+있습니다.
+
+그래서 13은 **자막이 안 잡히면 조용히 실패하지 않고, YouTube 공식 API가 주는 설명
+(description)으로 대신 시도합니다.** 시스템 프롬프트가 "설명만으로 쓸 때는 근거가
+약하니 짧게 쓰고 그 사실을 본문에 한 줄로 밝히라"고 지시하고, 화면에도(모델 출력을
+믿지 않고 응답 헤더로) "자막을 받지 못해 설명만으로 작성했습니다"라고 따로 표시합니다.
+자막도 설명도 없을 때만 진짜 "자막 없음" 실패로 끝납니다.
 
 헤더의 검색 드롭다운(⌘K)은 글과 프로젝트를 함께 찾고, 마지막 줄의 「결과 n건 모두 보기」로
 04 결과 페이지에 넘깁니다.
@@ -71,14 +102,16 @@ DB입니다.
 원시 HTML은 렌더하지 않습니다 — 본문 일부가 자동 생성되는 구조라 임의 HTML을 통과시키지
 않는 편이 안전합니다.
 
-## 아직 임시인 데이터
+## 캐시되는 데이터
 
-`src/lib/projects.ts`(프로젝트·커밋·PR)와 `src/lib/channels.ts`(구독 채널),
-`src/content/readmes.tsx`는 아직 하드코딩입니다. GitHub / YouTube API에서 받아 캐시할 자리에
-같은 모양으로 값을 넣어 두었습니다. `repo`의 `owner`도 자리표시자입니다.
+프로젝트의 저장소 정보(커밋·PR·README)와 구독 채널은 더는 하드코딩이 아닙니다 —
+`src/lib/github.ts`(GitHub API)와 `src/lib/youtube.ts`(YouTube Data API)가 각각 실제로
+불러오고, `projects/[slug]/sync.ts`(15 화면의 「지금 가져오기」)와 `videos/channels/actions.ts`
+(14 화면의 채널 등록)가 그 결과를 `repo_commits` · `repo_pulls` · `repo_readmes` ·
+`channels` 테이블에 캐시합니다. 공개 화면은 캐시만 읽고 API를 직접 부르지 않습니다.
 
 DB에는 `rls-check-draft`(초안)와 `rls-check-scheduled`(예약 발행) 두 행이 검증용으로 남아
-있습니다. 공개 화면에는 보이지 않고, 10 대시보드를 만들 때 상태 표시를 확인하는 데 씁니다.
+있습니다. 공개 화면에는 보이지 않고, 10 대시보드의 상태 표시를 확인하는 데 씁니다.
 
 ## 구조
 
@@ -86,6 +119,7 @@ DB에는 `rls-check-draft`(초안)와 `rls-check-scheduled`(예약 발행) 두 �
 src/
   app/
     globals.css        핸드오프 tokens.css 원본 + 그 아래 프로젝트 레이어
+    fonts.css          Pretendard 동적 서브셋 92조각 + JetBrains Mono @font-face
     layout.tsx         폰트, 파비콘, theme-color, 플래시 방지 스크립트, 헤더/푸터
     page.tsx           01 홈 (4블록)
     archive/           02 아카이브
@@ -95,7 +129,20 @@ src/
     projects/          06 프로젝트 목록
     projects/[slug]/   07 프로젝트 상세
     not-found.tsx      08 404
+    admin/login/       09 로그인 (GitHub 단일 사용자)
+    admin/(protected)/
+      page.tsx                       10 대시보드 (네 상태 필터 · 실시간 갱신)
+      posts/[slug]/, posts/new/      11 글 작성·편집 (50:50 분할)
+      videos/page.tsx                12 영상 브라우즈 (채널 칩 · 훑기 피드)
+      videos/[videoId]/              13 영상 시청 + AI 호출 (재생 · 명령 패널 · 스트리밍)
+      videos/channels/               14 채널 구독 관리 (등록/해지 · 쿼터)
+      projects/                      15 프로젝트 생성·연결 (2모드 · GitHub 동기화)
+    api/summarize/       개발 일지 초안 — 스트리밍 (라우트 핸들러)
+    api/summarize-video/ 영상 요약 초안 — 스트리밍
   components/
+    ui/                shadcn 컴포넌트 (Radix + cva). 외형은 기록실 토큰 그대로
+    quota-meter.tsx    남은 여유 하나 — 숫자가 먼저, 막대는 거듭 말하는 것
+    video-card.tsx     미디어 프레임 · 길이 라벨 · 「이미 글로 정리함」 표시
     post-card.tsx      카드 전체가 링크 1개, 비대칭 2열
     project-card.tsx   이름 · 설명 · owner/repo · 최근 활동 · 일지 n편 + 연결 배지
     section.tsx        섹션 머리 (mono 라벨 · 표제 · 더보기) — 홈·프로젝트 상세 공용
@@ -110,24 +157,66 @@ src/
     code-block.tsx     줄 번호, 강조 행, 복사 버튼
     markdown.tsx       mdast → React
     callout.tsx  post-nav.tsx  site-footer.tsx
-  content/readmes.tsx  프로젝트 README (임시)
   lib/
-    posts.ts           posts 테이블 조회 · 필터 · 검색 — 서버 전용
-    supabase/public.ts 공개 읽기 클라이언트 (쿠키 미사용 = 정적 생성 가능)
-    content-types.ts   타입과 순수 헬퍼 — 클라이언트에서도 안전
-    markdown.ts        소제목 id · 콜아웃 · 코드 펜스 해석
-    search-index.ts    클라이언트용 검색 인덱스 타입/필터
-    projects.ts  channels.ts  time.ts  highlight.ts
+    posts.ts             posts 테이블 조회 · 필터 · 검색 — 서버 전용
+    supabase/public.ts   공개 읽기 클라이언트 (쿠키 미사용 = 정적 생성 가능)
+    content-types.ts     타입과 순수 헬퍼 — 클라이언트에서도 안전
+    project-types.ts     프로젝트·채널 타입 — 클라이언트에서도 안전
+    duration.ts          영상 길이 포맷 — 클라이언트에서도 안전
+    markdown.ts           소제목 id · 콜아웃 · 코드 펜스 해석
+    search-index.ts       클라이언트용 검색 인덱스 타입/필터
+    projects.ts            프로젝트·커밋·PR·README·채널 — DB 조회, 서버 전용
+    github.ts               GitHub API 클라이언트 — 서버 전용
+    youtube.ts               YouTube Data API 클라이언트 — 서버 전용
+    videos.ts                 12 브라우즈 조립 (채널 수 + 1유닛) — 서버 전용
+    transcript.ts              영상 자막 — 비공식, 서버 전용(§자막은 비공식 경로)
+    ai/                          Gemini 어댑터 · 프롬프트 · 사용량 · 쿼터
+    time.ts  highlight.ts
+public/fonts/          셀프 호스팅 폰트 (Pretendard OFL · JetBrains Mono OFL)
 content/posts/         게시물 마크다운 (시드 원본 — 런타임에는 읽지 않음)
-scripts/               seed-posts.mjs · check-rls.mjs
+scripts/               seed-posts.mjs · check-rls.mjs · check-github.mjs
+supabase/migrations/   스키마 · RLS 정책
 docs/                  디자인 핸드오프 원본 (DESIGN_SYSTEM.md, HANDOFF.md)
 ```
 
+## UI 컴포넌트 = shadcn, 외형 = 기록실 토큰
+
+버튼·입력·선택·모달·시트·탭·토스트는 `src/components/ui`의 shadcn 컴포넌트입니다
+(Radix UI + class-variance-authority + tailwind-merge). **고른 것은 동작이지 외형이
+아닙니다** — 포커스 트랩, ESC, 타입어헤드, `aria-*` 연결처럼 직접 쓰면 반드시 한두 개
+빠뜨리는 것들을 Radix에 맡기고, 색·타이포·radius 0·괘선은 `@theme` 토큰 그대로 둡니다.
+그래서 `bg-accent` · `border-border-strong` 같은 유틸리티가 곧 디자인 시스템 토큰입니다.
+
+`globals.css`의 `.badge` · `.chip` · `.field__input` 계열은 **더는 쓰이지 않지만 남겨
+두었습니다.** 위쪽 절반은 핸드오프의 `tokens.css` 원본이고, 그 파일은 한 줄도 고치지 않는
+것이 이 저장소의 약속입니다. 새 화면에서는 `components/ui`를 쓰세요.
+
+## 폰트는 셀프 호스팅입니다
+
+Pretendard를 jsDelivr CDN에서 받아 쓰던 것을 `public/fonts`로 옮겼습니다. 동적 서브셋
+92조각을 그대로 가져왔으므로 브라우저는 **지금 화면에 쓰인 글자가 든 조각만** 받습니다
+(보통 3~5개, 100KB 안쪽). 첫 화면의 기본 라틴 + 최빈 한글이 든 91번 조각만
+`<link rel="preload">`로 미리 받아 FOUT을 줄입니다.
+
+JetBrains Mono도 같은 방식으로 라틴·라틴확장 두 조각만 받습니다. 한글 주석은
+D2Coding 등 뒤쪽 폴백이 받는다는 핸드오프 규칙 그대로입니다.
+
 ## 알려진 숙제
 
+- **`supabase/migrations/`가 원격 DB의 마이그레이션 이력을 전부 담고 있지 않습니다.**
+  원격에는 `create_posts_table` · `projects_and_channels_rls` · `repo_visibility_and_readme_table`
+  등 초기 12건이 적용돼 있는데, 이 디렉터리에는 `20260920…` 이후 3건만 파일로 있습니다.
+  그래서 **파일만 보고 "이 정책이 없구나"라고 판단하면 틀립니다** — 실제로 14 채널 구독 관리에
+  필요한 `channels_admin_all`(ALL, `private.is_admin()`)과 `channels_public_read`는 이미
+  `20260831023756_projects_and_channels_rls`에 들어 있습니다. 스키마를 확인할 때는 파일이 아니라
+  DB(`list_migrations` / `pg_policies`)를 보세요.
 - **정적 생성과 발행 시점.** `/posts/[slug]`와 `/tags/[tag]`는 빌드 시점에 DB를 읽어 정적
-  생성됩니다. 그래서 지금은 **글을 새로 넣어도 다시 빌드해야 보입니다.** 11 작성·편집 화면을
-  만들 때 저장 후 `revalidatePath()`를 호출하도록 이어야 합니다.
+  생성됩니다. 11 에디터의 `savePost`/`deletePost`가 저장·삭제 시 `revalidatePath()`를
+  부르므로 배포된 사이트에서는 바로 반영됩니다 — 다만 **로컬 `npm run dev`에서도 아니고
+  `npm run build` 직후의 정적 HTML만 보는 상황이라면**, 그 스냅샷은 다시 빌드하기 전까지
+  그대로입니다.
+- **13(영상 시청)의 자막은 비공식 경로라 서버 환경에서 자주 비어 옵니다.** 자세한 내용과
+  대응(설명으로 폴백)은 아래 「자막은 비공식 경로라 자주 비어 옵니다」 절에 있습니다.
 
 ## 판단이 필요했던 곳
 
