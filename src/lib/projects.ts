@@ -20,7 +20,7 @@ export * from "./project-types";
  */
 
 const PROJECT_COLUMNS =
-  "slug, name, description, repo, status, link_state, branch, language, readme, last_activity, synced_at";
+  "slug, name, description, repo, status, link_state, branch, language, repo_public, last_activity, synced_at, image_url, site_url";
 
 type ProjectRow = {
   slug: string;
@@ -31,9 +31,11 @@ type ProjectRow = {
   link_state: string;
   branch: string | null;
   language: string | null;
-  readme: string | null;
+  repo_public: boolean;
   last_activity: string | null;
   synced_at: string | null;
+  image_url: string | null;
+  site_url: string | null;
 };
 
 const toProject = (row: ProjectRow): Project => ({
@@ -45,9 +47,11 @@ const toProject = (row: ProjectRow): Project => ({
   linkState: row.link_state as RepoLink,
   branch: row.branch,
   language: row.language,
-  readme: row.readme,
+  repoPublic: row.repo_public,
   lastActivity: row.last_activity,
   syncedAt: row.synced_at,
+  imageUrl: row.image_url,
+  siteUrl: row.site_url,
 });
 
 /** 최근 활동순. 활동 기록이 없는 프로젝트는 뒤로 보냅니다. */
@@ -122,6 +126,20 @@ export async function getPulls(projectSlug: string, limit = 5): Promise<PullRequ
     url: r.url,
     at: r.at,
   }));
+}
+
+/**
+ * README. 정책이 가리면 행 자체가 오지 않습니다 — 앱이 공개 여부를 따로 판단하지 않습니다.
+ */
+export async function getReadme(projectSlug: string): Promise<string | null> {
+  const { data, error } = await supabasePublic
+    .from("repo_readmes")
+    .select("content")
+    .eq("project_slug", projectSlug)
+    .maybeSingle();
+
+  if (error) throw new Error(`README를 불러오지 못했습니다: ${error.message}`);
+  return data?.content ?? null;
 }
 
 /* ---------- 채널 ---------- */

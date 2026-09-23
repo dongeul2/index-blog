@@ -24,11 +24,14 @@ export default async function EditProjectPage({
     description: project.description,
     repo: project.repo ?? "",
     status: project.status,
+    repoPublic: project.repoPublic,
+    imageUrl: project.imageUrl ?? "",
+    siteUrl: project.siteUrl ?? "",
   };
 
   return (
     <div className="page admin-page">
-      <ProjectForm project={form} />
+      <ProjectForm project={form} linkState={project.linkState} syncedAt={project.syncedAt} />
     </div>
   );
 }

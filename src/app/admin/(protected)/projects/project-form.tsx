@@ -1,10 +1,41 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { REPO_PATTERN, SLUG_PATTERN, type ProjectStatus } from "@/lib/project-types";
 import { checkSlug, deleteProject, saveProject, type ProjectInput } from "./actions";
+import { syncProject } from "./sync";
+import { REPO_LINK_BADGE, REPO_LINK_LABEL, type RepoLink } from "@/lib/project-types";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+  FieldRow,
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export type FormProject = ProjectInput;
 
@@ -26,7 +57,15 @@ function slugFromRepo(repo: string): string {
     .replace(/^-|-$/g, "");
 }
 
-export function ProjectForm({ project }: { project: FormProject }) {
+export function ProjectForm({
+  project,
+  linkState,
+  syncedAt,
+}: {
+  project: FormProject;
+  linkState?: RepoLink;
+  syncedAt?: string | null;
+}) {
   const router = useRouter();
   const editing = project.originalSlug !== null;
 
@@ -38,7 +77,9 @@ export function ProjectForm({ project }: { project: FormProject }) {
   );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const dialogRef = useRef<HTMLDialogElement>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [syncNote, setSyncNote] = useState<string | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const set = <K extends keyof FormProject>(key: K, value: FormProject[K]) =>
     setForm((f) => ({ ...f, [key]: value }));
@@ -83,8 +124,29 @@ export function ProjectForm({ project }: { project: FormProject }) {
     router.push("/admin/projects");
   }
 
+  async function sync() {
+    if (!form.originalSlug) return;
+    setSyncing(true);
+    setSyncNote(null);
+    setError(null);
+    const result = await syncProject(form.originalSlug);
+    setSyncing(false);
+
+    if (!result.ok) {
+      setError(result.error);
+      return;
+    }
+    setSyncNote(
+      `커밋 ${result.commits}건 · PR ${result.pulls}건${result.readme ? " · README" : ""} 가져왔습니다.` +
+        (result.private && !form.repoPublic
+          ? " 비공개 저장소라 공개 화면에는 보이지 않습니다."
+          : ""),
+    );
+    router.refresh();
+  }
+
   async function remove() {
-    dialogRef.current?.close();
+    setConfirmOpen(false);
     if (!form.originalSlug) return;
     setBusy(true);
     const result = await deleteProject(form.originalSlug);
@@ -104,41 +166,30 @@ export function ProjectForm({ project }: { project: FormProject }) {
         <h1 className="admin-head__title">{editing ? "프로젝트 편집" : "새 프로젝트"}</h1>
 
         {error && (
-          <div className="callout callout--warn editor__error" role="alert">
-            <strong className="callout__label">저장하지 못했습니다</strong>
-            <p>{error}</p>
-          </div>
+          <Alert variant="danger" className="mt-4 max-w-(--container-prose)">
+            <AlertTitle>저장하지 못했습니다</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         )}
       </header>
 
       {/* 2모드 세그먼트 — 새로 만들기 / 기존 연결 */}
       {!editing && (
-        <div className="segment" role="group" aria-label="만드는 방식">
-          <button
-            type="button"
-            className="segment__option"
-            aria-pressed={mode === "create"}
-            onClick={() => setMode("create")}
-          >
-            새로 만들기
-          </button>
-          <button
-            type="button"
-            className="segment__option"
-            aria-pressed={mode === "connect"}
-            onClick={() => setMode("connect")}
-          >
-            기존 저장소 연결
-          </button>
-        </div>
+        <Tabs value={mode} onValueChange={(v) => setMode(v as Mode)} className="mt-6">
+          <TabsList aria-label="만드는 방식">
+            <TabsTrigger value="create">새로 만들기</TabsTrigger>
+            <TabsTrigger value="connect">기존 저장소 연결</TabsTrigger>
+          </TabsList>
+        </Tabs>
       )}
 
-      <div className="editor__meta">
+      <FieldGroup className="mt-6">
         {/* 연결 모드에서는 저장소를 먼저 묻고, 거기서 주소를 제안합니다 */}
         {(mode === "connect" || editing) && (
-          <label className="field field--wide">
-            <span className="field__label">GitHub 저장소</span>
-            <input
+          <Field wide>
+            <FieldLabel htmlFor="project-repo">GitHub 저장소</FieldLabel>
+            <Input
+              id="project-repo"
               value={form.repo}
               onChange={(e) => {
                 const repo = e.target.value;
@@ -150,109 +201,212 @@ export function ProjectForm({ project }: { project: FormProject }) {
                 }
               }}
               placeholder="owner/repo"
-              className="field__input field__input--mono"
+              aria-invalid={Boolean(form.repo.trim()) && !repoValid}
+              className="font-mono text-[0.8125rem]"
             />
-            <span className="field__hint">
-              {form.repo.trim() && !repoValid
-                ? "owner/repo 형식이어야 합니다."
-                : "적어 두기만 합니다. 실제로 읽어오는 것은 GitHub 토큰을 넣은 뒤입니다."}
-            </span>
-          </label>
+            {form.repo.trim() && !repoValid ? (
+              <FieldError>owner/repo 형식이어야 합니다.</FieldError>
+            ) : (
+              <FieldDescription>
+                적어 두기만 합니다. 실제로 읽어오는 것은 편집 화면의 「지금 가져오기」입니다.
+              </FieldDescription>
+            )}
+          </Field>
         )}
 
-        <label className="field field--wide">
-          <span className="field__label">이름</span>
-          <input
+        <Field wide>
+          <FieldLabel htmlFor="project-name">이름</FieldLabel>
+          <Input
+            id="project-name"
             value={form.name}
             onChange={(e) => set("name", e.target.value)}
             placeholder="기록실 INDEX."
-            className="field__input"
           />
-        </label>
+        </Field>
 
-        <label className="field field--wide">
-          <span className="field__label">주소 (slug)</span>
-          <input
+        <Field wide>
+          <FieldLabel htmlFor="project-slug">주소 (slug)</FieldLabel>
+          <Input
+            id="project-slug"
             value={form.slug}
             onChange={(e) => set("slug", e.target.value)}
             placeholder="index-blog"
-            className="field__input field__input--mono"
+            aria-invalid={slugState.kind === "taken"}
+            className="font-mono text-[0.8125rem]"
           />
           {/* 검사중 / 사용 가능 / 이미 있음 */}
-          <span className={`field__hint check--${slugState.kind}`} role="status" aria-live="polite">
-            {slugState.kind === "checking" && "확인 중…"}
-            {slugState.kind === "ok" && "사용 가능합니다"}
-            {slugState.kind === "taken" && slugState.reason}
-            {slugState.kind === "idle" && "/projects/주소 로 열립니다"}
-          </span>
-        </label>
+          {slugState.kind === "taken" ? (
+            <FieldError>{slugState.reason}</FieldError>
+          ) : (
+            <FieldDescription role="status" aria-live="polite">
+              {slugState.kind === "checking" && "확인 중…"}
+              {slugState.kind === "ok" && "사용 가능합니다"}
+              {slugState.kind === "idle" && "/projects/주소 로 열립니다"}
+            </FieldDescription>
+          )}
+        </Field>
 
-        <label className="field field--wide">
-          <span className="field__label">한 줄 설명</span>
-          <input
+        <Field wide>
+          <FieldLabel htmlFor="project-description">한 줄 설명</FieldLabel>
+          <Input
+            id="project-description"
             value={form.description}
             onChange={(e) => set("description", e.target.value)}
             placeholder="이 프로젝트가 무엇인지 한 줄로"
-            className="field__input"
           />
-        </label>
+        </Field>
 
-        <label className="field">
-          <span className="field__label">상태</span>
-          <select
-            value={form.status}
-            onChange={(e) => set("status", e.target.value as ProjectStatus)}
-            className="field__input"
-          >
-            <option value="active">진행 중</option>
-            <option value="archived">보관됨</option>
-          </select>
-        </label>
-      </div>
+        {/* 업로드 없이 참조만 — 이미 어딘가에 있는 이미지의 URL을 적습니다 */}
+        <Field wide>
+          <FieldLabel htmlFor="project-image">커버 이미지 URL</FieldLabel>
+          <Input
+            id="project-image"
+            value={form.imageUrl}
+            onChange={(e) => set("imageUrl", e.target.value)}
+            placeholder="https://…"
+            className="font-mono text-[0.8125rem]"
+          />
+          <FieldDescription>
+            비워 두면 이미지 없이(지금과 같이) 보입니다. 16:9로 잘려 보이니 가로로 넉넉한 스크린샷이
+            좋습니다.
+          </FieldDescription>
+        </Field>
+
+        <Field wide>
+          <FieldLabel htmlFor="project-site">사이트 링크</FieldLabel>
+          <Input
+            id="project-site"
+            value={form.siteUrl}
+            onChange={(e) => set("siteUrl", e.target.value)}
+            placeholder="https://…"
+            className="font-mono text-[0.8125rem]"
+          />
+          <FieldDescription>
+            라이브 데모 등. 카드 우상단에 별도 바로가기로 뜹니다 — GitHub 저장소 링크와는
+            다릅니다.
+          </FieldDescription>
+        </Field>
+
+        {/* 비공개 저장소를 연결했을 때의 안전장치 */}
+        <Field wide>
+          <FieldLabel htmlFor="project-repo-public">저장소 내용 공개</FieldLabel>
+          <FieldRow>
+            <Checkbox
+              id="project-repo-public"
+              checked={form.repoPublic}
+              onCheckedChange={(v) => set("repoPublic", v === true)}
+            />
+            <FieldLabel
+              htmlFor="project-repo-public"
+              className="font-sans text-sm tracking-normal text-text-2"
+            >
+              README·커밋·Pull Request를 공개 화면에 보입니다
+            </FieldLabel>
+          </FieldRow>
+          <FieldDescription>
+            {form.repoPublic
+              ? "누구나 이 저장소의 README와 커밋 메시지를 봅니다."
+              : "관리자에게만 보입니다. 비공개 저장소라면 이대로 두세요."}
+          </FieldDescription>
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor="project-status">상태</FieldLabel>
+          <Select value={form.status} onValueChange={(v) => set("status", v as ProjectStatus)}>
+            <SelectTrigger id="project-status">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="active">진행 중</SelectItem>
+              <SelectItem value="archived">보관됨</SelectItem>
+            </SelectContent>
+          </Select>
+        </Field>
+      </FieldGroup>
+
+      {/* 연결 확인 — 실패하면 상태가 「연결 안 됨」으로 내려가 눈에 보입니다 */}
+      {editing && (
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border border-border bg-bg-subtle px-4 py-3">
+          <div className="flex flex-wrap items-center gap-3">
+            {linkState && (
+              <Badge variant={REPO_LINK_BADGE[linkState]}>{REPO_LINK_LABEL[linkState]}</Badge>
+            )}
+            <span className="font-mono text-[0.6875rem] text-text-muted">
+              {syncedAt
+                ? `마지막 동기화 ${new Intl.DateTimeFormat("ko-KR", {
+                    timeZone: "Asia/Seoul",
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  }).format(new Date(syncedAt))}`
+                : "아직 가져온 적 없음"}
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button asChild variant="outline" size="sm">
+              <Link href={`/admin/projects/${form.originalSlug}/summarize`}>작업 요약</Link>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => void sync()}
+              disabled={syncing || !form.repo.trim()}
+            >
+              {syncing ? "가져오는 중…" : "지금 가져오기"}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {syncNote && (
+        <p className="mt-3 text-sm text-text-2" role="status" aria-live="polite">
+          {syncNote}
+        </p>
+      )}
 
       <div className="editor__actions">
         <p className="editor__hint">
           {mode === "connect" && !editing
-            ? "저장소를 적어 두면 GitHub 연결 단계에서 바로 읽어옵니다."
+            ? "저장소를 적어 두면 편집 화면의 「지금 가져오기」로 바로 읽어옵니다."
             : "저장소는 나중에 연결해도 됩니다."}
         </p>
-        <div className="editor__buttons">
+        <div className="flex flex-wrap gap-2">
           {editing && (
-            <button
+            <Button
               type="button"
-              className="editor__danger"
-              onClick={() => dialogRef.current?.showModal()}
+              variant="destructive"
+              onClick={() => setConfirmOpen(true)}
               disabled={busy}
             >
               지우기
-            </button>
+            </Button>
           )}
-          <button
-            type="button"
-            className="editor__primary"
-            onClick={() => void submit()}
-            disabled={!canSave}
-          >
+          <Button type="button" onClick={() => void submit()} disabled={!canSave}>
             {busy ? "저장 중…" : "저장"}
-          </button>
+          </Button>
         </div>
       </div>
 
-      <dialog ref={dialogRef} className="modal elevated">
-        <h2 className="modal__title">이 프로젝트를 지울까요?</h2>
-        <p className="modal__body">
-          <strong>{form.name || form.slug}</strong> 과(와) 그 저장소 캐시를 지웁니다. 이 프로젝트에
-          묶인 개발 일지는 남지만 프로젝트 줄이 사라집니다.
-        </p>
-        <div className="modal__actions">
-          <button type="button" autoFocus onClick={() => dialogRef.current?.close()}>
-            취소
-          </button>
-          <button type="button" className="editor__danger" onClick={() => void remove()}>
-            지우기
-          </button>
-        </div>
-      </dialog>
+      {/* 파괴적 액션이 기본값이 되지 않도록, 열릴 때 포커스는 「취소」에 둡니다 */}
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>이 프로젝트를 지울까요?</DialogTitle>
+            <DialogDescription>
+              <strong className="font-semibold text-text">{form.name || form.slug}</strong> 과(와) 그
+              저장소 캐시를 지웁니다. 이 프로젝트에 묶인 개발 일지는 남지만 프로젝트 줄이 사라집니다.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" autoFocus onClick={() => setConfirmOpen(false)}>
+              취소
+            </Button>
+            <Button type="button" variant="destructive" onClick={() => void remove()}>
+              지우기
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

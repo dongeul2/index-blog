@@ -12,7 +12,10 @@ import {
   getCommits,
   getProject,
   getPulls,
+  getReadme,
 } from "@/lib/projects";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { relativeTime } from "@/lib/time";
 
 type Params = { slug: string };
@@ -37,14 +40,15 @@ export default async function ProjectPage({ params }: { params: Promise<Params> 
   const project = await getProject(slug);
   if (!project) notFound();
 
-  const [devlogs, commits, pulls] = await Promise.all([
+  const [devlogs, commits, pulls, readme] = await Promise.all([
     postsOfProject(project.slug),
     getCommits(project.slug),
     getPulls(project.slug),
+    getReadme(project.slug),
   ]);
 
   // README는 GitHub에서 받아 온 마크다운 원문입니다. 본문과 같은 파이프라인으로 그립니다.
-  const readmeTree = project.readme ? parseMarkdown(project.readme) : null;
+  const readmeTree = readme ? parseMarkdown(readme) : null;
   if (readmeTree) prepare(readmeTree);
 
   // 상대 시각은 요청 시점을 기준으로 계산합니다(빌드 시각에 얼어붙지 않도록).
@@ -58,18 +62,43 @@ export default async function ProjectPage({ params }: { params: Promise<Params> 
           <Link href="/projects">← 프로젝트 목록</Link>
         </p>
 
+        {/* 관리자가 URL을 적어 넣은 프로젝트만 — 없으면 지금과 같이 이미지 없이 보입니다.
+            .media-frame은 hover로 밝아지는 카드용이라(이 히어로는 링크가 아니라 항상 어둡게
+            남음), 여기서도 영상 임베드와 같은 이유로 처음부터 정상 밝기로 둡니다. */}
+        {project.imageUrl && (
+          <div className="relative mt-4 aspect-[21/9] w-full overflow-hidden border border-border bg-media">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={project.imageUrl} alt="" className="size-full object-cover" />
+          </div>
+        )}
+
         <div className="project-head__title-row">
           <h1 className="project-head__name">{project.name}</h1>
-          <span className={REPO_LINK_BADGE[project.linkState]}>
+          <Badge variant={REPO_LINK_BADGE[project.linkState]}>
             {REPO_LINK_LABEL[project.linkState]}
             <span className="sr-only">저장소 연결 상태: {REPO_LINK_LABEL[project.linkState]}</span>
-          </span>
-          {project.status === "archived" && <span className="badge badge--draft">보관됨</span>}
+          </Badge>
+          {project.status === "archived" && <Badge variant="draft">보관됨</Badge>}
         </div>
 
         <p className="project-head__desc">{project.description}</p>
 
         <dl className="repo-facts">
+          {project.siteUrl && (
+            <div>
+              <dt>사이트</dt>
+              <dd>
+                <a
+                  href={project.siteUrl}
+                  rel="noreferrer noopener"
+                  target="_blank"
+                  className="repo-facts__repo"
+                >
+                  바로가기 <span aria-hidden="true">↗</span>
+                </a>
+              </dd>
+            </div>
+          )}
           <div>
             <dt>저장소</dt>
             <dd>
@@ -114,13 +143,13 @@ export default async function ProjectPage({ params }: { params: Promise<Params> 
         </dl>
 
         {project.linkState === "unlinked" && (
-          <div className="callout callout--note project-head__alert">
-            <strong className="callout__label">메모</strong>
-            <p>
+          <Alert variant="note" className="project-head__alert">
+            <AlertTitle>메모</AlertTitle>
+            <AlertDescription>
               저장소가 아직 연결되지 않았습니다. 관리자 화면에서 연결하면 README·커밋·Pull
               Request를 가져옵니다.
-            </p>
-          </div>
+            </AlertDescription>
+          </Alert>
         )}
       </header>
 

@@ -14,6 +14,12 @@ import {
   type SummaryRequest,
 } from "@/lib/ai/shared";
 import { saveDraft } from "./actions";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 
 export type PanelCommit = {
   sha: string;
@@ -189,33 +195,30 @@ export function SummarizePanel({
 
         {/* 쿼터 소진은 "실패"가 아니라 "오늘은 여기까지"라, 라벨을 달리 답니다. */}
         {error && (
-          <div className="callout callout--warn editor__error" role="alert">
-            <strong className="callout__label">
-              {error.kind === "daily" ? "일일 한도 소진" : "실패"}
-            </strong>
-            <p>{error.message}</p>
-          </div>
+          <Alert
+            variant={error.kind === "daily" ? "warn" : "danger"}
+            className="mt-4 max-w-(--container-prose)"
+          >
+            <AlertTitle>{error.kind === "daily" ? "일일 한도 소진" : "실패"}</AlertTitle>
+            <AlertDescription>{error.message}</AlertDescription>
+          </Alert>
         )}
       </header>
 
       {/* 기간 */}
-      <div className="segment" role="group" aria-label="기간">
-        {(Object.keys(RANGE_LABEL) as Range[]).map((r) => (
-          <button
-            key={r}
-            type="button"
-            className="segment__option"
-            aria-pressed={range === r}
-            onClick={() => setRange(r)}
-          >
-            {RANGE_LABEL[r]}
-          </button>
-        ))}
-      </div>
+      <Tabs value={range} onValueChange={(v) => setRange(v as Range)} className="mt-6">
+        <TabsList aria-label="기간">
+          {(Object.keys(RANGE_LABEL) as Range[]).map((r) => (
+            <TabsTrigger key={r} value={r}>
+              {RANGE_LABEL[r]}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
 
       {/* 커밋 고르기 */}
       <div className="summarize__commits">
-        <p className="field__label">
+        <p className="font-mono text-[0.6875rem] tracking-[0.08em] text-text-muted">
           커밋 {chosen.length}건 선택됨 {inRange.length !== chosen.length && `(${inRange.length}건 중)`}
         </p>
         {inRange.length > 0 ? (
@@ -223,10 +226,10 @@ export function SummarizePanel({
             {inRange.map((c) => (
               <li key={c.sha}>
                 <label className="summarize__commit">
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     checked={!excluded.has(c.sha)}
-                    onChange={() => toggle(c.sha)}
+                    onCheckedChange={() => toggle(c.sha)}
+                    aria-label={`커밋 ${c.sha.slice(0, 7)} 포함`}
                   />
                   <code className="repo-item__hash">{c.sha.slice(0, 7)}</code>
                   <span className="repo-item__msg">{c.message}</span>
@@ -243,18 +246,19 @@ export function SummarizePanel({
       </div>
 
       {/* 메모 — '왜'가 들어오는 유일한 자리 */}
-      <label className="field field--wide summarize__memo">
-        <span className="field__label">메모 (선택)</span>
-        <textarea
-          className="split__editor summarize__memo-input"
+      <Field wide className="summarize__memo">
+        <FieldLabel htmlFor="summarize-memo">메모 (선택)</FieldLabel>
+        <Textarea
+          id="summarize-memo"
+          className="h-32 resize-none bg-code-bg p-4 font-mono text-code leading-[1.75] text-code-fg"
           value={memo}
           onChange={(e) => setMemo(e.target.value)}
           placeholder="왜 그렇게 했는지, 무엇을 고민했는지. 커밋 메시지에 없는 것은 여기서만 들어옵니다."
         />
-        <span className="field__hint">
+        <FieldDescription>
           비워 두면 무엇을 했는지 위주로만 씁니다 — 이유를 지어내지 않도록 지시해 두었습니다.
-        </span>
-      </label>
+        </FieldDescription>
+      </Field>
 
       <div className="editor__actions">
         <p className="editor__hint">
@@ -262,31 +266,27 @@ export function SummarizePanel({
             ? "커밋을 하나 이상 고르세요."
             : "초안은 발행되지 않습니다. 저장하면 에디터로 넘어갑니다."}
         </p>
-        <div className="editor__buttons">
+        <div className="flex flex-wrap gap-2">
+          {/* 생성 중에는 「중단」이 첫 탭 대상이어야 합니다 */}
           {streaming && (
-            <button
-              type="button"
-              className="editor__secondary"
-              onClick={() => abortRef.current?.abort()}
-            >
+            <Button type="button" variant="outline" onClick={() => abortRef.current?.abort()}>
               중단
-            </button>
+            </Button>
           )}
-          <button
+          <Button
             type="button"
-            className="editor__primary"
             onClick={() => void generate()}
             disabled={streaming || chosen.length === 0}
           >
             {streaming ? "만드는 중…" : "초안 만들기"}
-          </button>
+          </Button>
         </div>
       </div>
 
       {/* 결과 */}
       {(draft || streaming) && (
         <section className="summarize__result">
-          <div className="split__label">
+          <div className="split__label" aria-live="polite" aria-busy={streaming}>
             <span>초안</span>
             {usage && (
               <span className="split__count">
@@ -308,24 +308,20 @@ export function SummarizePanel({
             {streaming && <span className="streaming-caret" aria-hidden="true" />}
           </div>
 
+          {/* 3분기 — 「초안 저장」이 1차이자 첫 탭 대상입니다 */}
           {!streaming && parsed.title && (
-            <div className="editor__buttons summarize__keep">
-              <button
+            <div className="summarize__keep flex flex-wrap gap-2">
+              <Button type="button" onClick={() => void keep()} disabled={saving}>
+                {saving ? "저장 중…" : "초안 저장"}
+              </Button>
+              <Button
                 type="button"
-                className="editor__secondary"
+                variant="outline"
                 onClick={() => void generate()}
                 disabled={saving}
               >
                 다시 생성
-              </button>
-              <button
-                type="button"
-                className="editor__primary"
-                onClick={() => void keep()}
-                disabled={saving}
-              >
-                {saving ? "저장 중…" : "초안 저장"}
-              </button>
+              </Button>
             </div>
           )}
         </section>

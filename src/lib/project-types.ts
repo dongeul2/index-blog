@@ -16,11 +16,12 @@ export const REPO_LINK_LABEL: Record<RepoLink, string> = {
   unlinked: "연결 안 됨",
 };
 
-export const REPO_LINK_BADGE: Record<RepoLink, string> = {
-  linked: "badge badge--linked",
-  generated: "badge badge--generated",
-  unlinked: "badge badge--unlinked",
-};
+/** `<Badge variant>` 로 그대로 넘깁니다 — 클래스 문자열을 손으로 잇지 않습니다. */
+export const REPO_LINK_BADGE = {
+  linked: "linked",
+  generated: "generated",
+  unlinked: "unlinked",
+} as const satisfies Record<RepoLink, RepoLink>;
 
 export type PrState = "open" | "merged" | "closed";
 
@@ -56,10 +57,15 @@ export type Project = {
   linkState: RepoLink;
   branch: string | null;
   language: string | null;
-  readme: string | null;
+  /** README·커밋·PR을 공개 화면에 보일지. 비공개 저장소를 연결했을 때의 안전장치입니다. */
+  repoPublic: boolean;
   lastActivity: string | null;
   /** GitHub에서 마지막으로 받아온 시각. null이면 아직 한 번도 안 받음 */
   syncedAt: string | null;
+  /** 카드·상세 페이지 커버 이미지. 관리자가 직접 URL을 적어 넣습니다(업로드 없음) */
+  imageUrl: string | null;
+  /** 라이브 데모 등 바로가기 링크 */
+  siteUrl: string | null;
 };
 
 export type Channel = {

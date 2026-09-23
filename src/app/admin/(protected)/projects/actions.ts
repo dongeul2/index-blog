@@ -19,7 +19,20 @@ export type ProjectInput = {
   /** 빈 문자열이면 연결하지 않은 것으로 봅니다 */
   repo: string;
   status: ProjectStatus;
+  /** README·커밋·PR을 공개 화면에 보일지 */
+  repoPublic: boolean;
+  /** 카드·상세 커버 이미지 URL. 빈 문자열이면 이미지 없음 */
+  imageUrl: string;
+  /** 라이브 데모 등 바로가기 링크. 빈 문자열이면 링크 없음 */
+  siteUrl: string;
 };
+
+/** 빈 문자열은 null로, 값이 있으면 http(s) URL인지만 확인합니다(업로드 없이 참조만). */
+function normalizeUrlField(value: string): { ok: true; value: string | null } | { ok: false } {
+  const trimmed = value.trim();
+  if (!trimmed) return { ok: true, value: null };
+  return /^https?:\/\/.+/i.test(trimmed) ? { ok: true, value: trimmed } : { ok: false };
+}
 
 export type ProjectResult = { ok: true; slug: string } | { ok: false; error: string };
 
@@ -62,9 +75,32 @@ export async function saveProject(input: ProjectInput): Promise<ProjectResult> {
     return { ok: false, error: "저장소는 owner/repo 형식이어야 합니다. 예: dongeul2/index-blog" };
   }
 
-  // 저장소를 적었다고 곧바로 "연결됨"은 아닙니다.
-  // 실제로 GitHub에서 읽어 온 뒤에야 linked로 올립니다(2단계).
-  const linkState: RepoLink = "unlinked";
+  const image = normalizeUrlField(input.imageUrl);
+  if (!image.ok) return { ok: false, error: "커버 이미지는 http(s):// 로 시작하는 URL이어야 합니다." };
+  const site = normalizeUrlField(input.siteUrl);
+  if (!site.ok) return { ok: false, error: "사이트 링크는 http(s):// 로 시작하는 URL이어야 합니다." };
+
+  const supabase = await createClient();
+
+  // 연결 상태는 폼이 아니라 DB에서 가져옵니다.
+  // 저장소를 적었다고 곧바로 "연결됨"은 아니지만, 이미 확인된 연결을 저장 한 번으로
+  // 되돌려서도 안 됩니다. **저장소가 실제로 바뀐 경우에만** 초기화합니다.
+  const existing = input.originalSlug
+    ? (
+        await supabase
+          .from("projects")
+          .select("repo, link_state")
+          .eq("slug", input.originalSlug)
+          .maybeSingle()
+      ).data
+    : null;
+
+  const repoChanged = (existing?.repo ?? "") !== repo;
+  const linkState: RepoLink = !repo
+    ? "unlinked"
+    : repoChanged
+      ? "unlinked"
+      : ((existing?.link_state as RepoLink | undefined) ?? "unlinked");
 
   const row = {
     slug,
@@ -73,9 +109,11 @@ export async function saveProject(input: ProjectInput): Promise<ProjectResult> {
     repo: repo || null,
     status: input.status,
     link_state: linkState,
+    repo_public: input.repoPublic,
+    image_url: image.value,
+    site_url: site.value,
   };
 
-  const supabase = await createClient();
   const query = input.originalSlug
     ? supabase.from("projects").update(row).eq("slug", input.originalSlug).select("slug").single()
     : supabase.from("projects").insert(row).select("slug").single();

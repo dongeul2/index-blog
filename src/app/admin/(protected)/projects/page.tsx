@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { REPO_LINK_BADGE, REPO_LINK_LABEL, getProjects } from "@/lib/projects";
 import { postsOfProject } from "@/lib/posts";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
   title: "프로젝트",
@@ -24,9 +26,9 @@ export default async function AdminProjectsPage() {
             <p className="admin-head__label">ADMIN</p>
             <h1 className="admin-head__title">프로젝트</h1>
           </div>
-          <Link href="/admin/projects/new" className="admin-head__primary">
-            새 프로젝트
-          </Link>
+          <Button asChild>
+            <Link href="/admin/projects/new">새 프로젝트</Link>
+          </Button>
         </div>
         <p className="admin-head__who">
           {projects.length}개 · 저장소 연결{" "}
@@ -39,11 +41,11 @@ export default async function AdminProjectsPage() {
           {projects.map((p) => (
             <li className="queue-row" key={p.slug}>
               <span className="queue-row__badges">
-                <span className={REPO_LINK_BADGE[p.linkState]}>
+                <Badge variant={REPO_LINK_BADGE[p.linkState]}>
                   {REPO_LINK_LABEL[p.linkState]}
                   <span className="sr-only">저장소 연결 상태</span>
-                </span>
-                {p.status === "archived" && <span className="badge badge--draft">보관됨</span>}
+                </Badge>
+                {p.status === "archived" && <Badge variant="draft">보관됨</Badge>}
               </span>
 
               <div className="queue-row__body">
@@ -81,9 +83,9 @@ export default async function AdminProjectsPage() {
         <div className="empty-state admin-empty">
           <p>아직 프로젝트가 없습니다.</p>
           <p className="admin-empty__action">
-            <Link href="/admin/projects/new" className="admin-head__primary">
-              첫 프로젝트 만들기
-            </Link>
+            <Button asChild>
+              <Link href="/admin/projects/new">첫 프로젝트 만들기</Link>
+            </Button>
           </p>
         </div>
       )}

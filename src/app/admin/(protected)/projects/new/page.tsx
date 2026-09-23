@@ -13,6 +13,9 @@ const EMPTY: FormProject = {
   description: "",
   repo: "",
   status: "active",
+  repoPublic: false,
+  imageUrl: "",
+  siteUrl: "",
 };
 
 export default function NewProjectPage() {
