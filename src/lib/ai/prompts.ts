@@ -1,4 +1,4 @@
-import type { SummaryRequest } from "./shared";
+import type { SummaryRequest, VideoSummaryRequest } from "./shared";
 
 /**
  * 프롬프트.
@@ -77,4 +77,78 @@ export function buildDevlogPrompt(req: SummaryRequest): string {
 export const devlogMessages = (req: SummaryRequest) => ({
   system: DEVLOG_SYSTEM,
   input: buildDevlogPrompt(req),
+});
+
+/**
+ * 영상 요약 초안.
+ *
+ * **근거는 둘 중 하나입니다 — 자막이 있으면 자막, 없으면 YouTube 공식 API가 주는
+ * 설명(description)** 입니다. 자막은 비공식 경로로 받아 오는데(`lib/transcript.ts`),
+ * YouTube가 서버발 요청을 자주 막아서 실제로는 자주 비어 옵니다. 그렇다고 기능 전체를
+ * "자막 없음"으로 막으면 거의 항상 실패하는 화면이 되므로, 설명만으로도 시도합니다 —
+ * 다만 근거가 약하다는 것을 시스템 프롬프트가 분명히 압니다.
+ *
+ * 자동 생성 자막은 구두점·띄어쓰기가 부정확해서, "문맥으로 다듬되 의미는 벗어나지
+ * 말라"는 지시가 중요합니다 — 안 그러면 오탈자를 그대로 살리거나, 반대로 없는 내용을
+ * 만들어 다듬습니다.
+ */
+const VIDEO_SUMMARY_SYSTEM = `당신은 개인 기술 블로그 「기록실 INDEX.」의 영상 요약 초안을 씁니다.
+
+## 무엇을 쓰는가
+영상의 자막(또는 자막이 없으면 설명文)과 작성자의 명령을 받아, 그 영상 내용을 정리한
+글의 **초안**을 씁니다. 완성본이 아니라 초안입니다. 작성자가 이어서 고칠 것을 전제로
+씁니다.
+
+## 지켜야 할 것
+- **주어진 자료(자막 또는 설명)에 없는 내용을 지어내지 마세요.** 잘리거나 불완전해도
+  그 안에서만 판단하세요.
+- **자료가 "설명"뿐이고 자막이 없다면**, 설명은 보통 영상 전체가 아니라 요약·링크
+  모음이라 정보가 적습니다. 무리해서 길게 쓰지 말고, 아는 만큼만 짧게 쓰세요. 그리고
+  본문 시작에 "자막을 받지 못해 설명을 바탕으로 정리했습니다"라고 한 줄로 밝히세요.
+- 작성자의 명령(예: "핵심 3줄", "실무 적용 아이디어", "코드 예제 위주로")을 본문의 방향으로
+  삼으세요. 명령이 없으면 자료 전체를 고르게 요약하세요.
+- 자동 생성 자막은 구두점·띄어쓰기가 부정확할 수 있습니다. 문맥으로 자연스럽게 다듬어
+  쓰되 원래 의미를 벗어나지 마세요.
+- **한국어로 씁니다.** 문장은 짧고 담백하게. 과장·감탄·마케팅 어투를 쓰지 않습니다.
+
+## 형식
+첫 두 줄에 제목과 한 줄 요약을 쓰고, 구분선 뒤에 마크다운 본문을 씁니다.
+
+TITLE: (한 줄. 영상 제목을 그대로 베끼지 말고 내용이 드러나게)
+SUMMARY: (목록에 뜨는 한 줄 요약. 한 문장)
+---
+(마크다운 본문)
+
+본문에서 쓸 수 있는 문법:
+- \`## 소제목 {#anchor-id}\` — 앵커 id는 영소문자·하이픈
+- \`\`\`ts:파일명.ts {3,7}\`\`\` — 언어:파일명, 중괄호는 강조할 줄 (자료에 실제 코드가
+  언급될 때만 씁니다 — 지어내지 않습니다)
+- \`> [!NOTE]\` \`[!TIP]\` \`[!WARNING]\` — 콜아웃
+- 표·목록·인라인 코드
+
+소제목은 2~4개면 충분합니다. 설명만으로 쓰는 경우 1~2개로도 충분합니다.`;
+
+function buildVideoSummaryPrompt(
+  req: VideoSummaryRequest,
+  source: { kind: "transcript" | "description"; text: string },
+): string {
+  const lines = [
+    `영상: ${req.title}`,
+    `채널: ${req.channelTitle}`,
+    "",
+    "## 작성자 명령",
+    req.instruction.trim() || "(없음 — 자료 전체를 고르게 요약하세요)",
+    "",
+    source.kind === "transcript" ? "## 자막" : "## 설명 (자막을 받지 못했습니다 — 이것이 유일한 근거입니다)",
+    source.text,
+  ];
+  return lines.join("\n");
+}
+
+export const videoSummaryMessages = (
+  req: VideoSummaryRequest,
+  source: { kind: "transcript" | "description"; text: string },
+) => ({
+  system: VIDEO_SUMMARY_SYSTEM,
+  input: buildVideoSummaryPrompt(req, source),
 });

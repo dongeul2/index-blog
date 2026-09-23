@@ -311,3 +311,129 @@ export async function channelInfo(channelId: string): Promise<YouTubeResult<Chan
     },
   };
 }
+
+/**
+ * `@handle` 로 채널 찾기. **1유닛.**
+ *
+ * `search.list`(100유닛)로도 같은 일을 할 수 있지만, 핸들을 아는 상태라면
+ * `channels.list?forHandle=`이 정확하고 100배 쌉니다.
+ */
+export async function channelByHandle(handle: string): Promise<YouTubeResult<ChannelInfo | null>> {
+  const clean = handle.startsWith("@") ? handle : `@${handle}`;
+  const res = await call<ChannelsResponse>("channels.list", {
+    part: "snippet",
+    forHandle: clean,
+  });
+  if (!res.ok) return res;
+
+  const it = res.data.items[0];
+  if (!it) return { ok: true, data: null };
+
+  return {
+    ok: true,
+    data: {
+      id: it.id,
+      title: it.snippet.title,
+      handle: it.snippet.customUrl ?? clean,
+      thumbnail: it.snippet.thumbnails?.default?.url ?? null,
+    },
+  };
+}
+
+/** 주소·핸들·ID 중 무엇을 붙여 넣었는지. */
+export type ChannelRef =
+  | { kind: "id"; value: string }
+  | { kind: "handle"; value: string }
+  | { kind: "unknown"; value: string };
+
+/**
+ * 사람이 붙여 넣는 것은 대개 주소입니다. 무엇이 왔는지 여기서 한 번에 가릅니다.
+ *
+ * `/c/이름`·`/user/이름`은 핸들이 아니라 레거시 커스텀 URL이라 `forHandle`로 찾히지
+ * 않을 수 있습니다. 그래도 핸들로 한 번 시도합니다 — 실패해도 1유닛이고,
+ * 실패하면 화면이 "채널 ID를 직접 넣어 달라"고 말합니다.
+ */
+export function parseChannelRef(input: string): ChannelRef {
+  const raw = input.trim();
+  if (!raw) return { kind: "unknown", value: raw };
+
+  if (/^UC[\w-]{20,}$/.test(raw)) return { kind: "id", value: raw };
+  if (raw.startsWith("@")) return { kind: "handle", value: raw };
+
+  const match = raw.match(
+    /(?:youtube\.com|youtu\.be)\/(?:(channel)\/(UC[\w-]+)|@([\w.-]+)|(?:c|user)\/([\w.-]+))/i,
+  );
+  if (match) {
+    if (match[2]) return { kind: "id", value: match[2] };
+    if (match[3]) return { kind: "handle", value: `@${match[3]}` };
+    if (match[4]) return { kind: "handle", value: `@${match[4]}` };
+  }
+
+  // 주소가 아니면 핸들로 봅니다(@ 없이 적는 사람이 많습니다).
+  if (/^[\w.-]+$/.test(raw)) return { kind: "handle", value: `@${raw}` };
+  return { kind: "unknown", value: raw };
+}
+
+type FullVideoResponse = {
+  items: {
+    id: string;
+    snippet: {
+      title: string;
+      channelId: string;
+      channelTitle: string;
+      publishedAt: string;
+      description: string;
+      thumbnails?: Record<string, { url: string }>;
+    };
+    contentDetails: { duration: string; caption: string };
+    statistics?: { viewCount?: string };
+  }[];
+};
+
+export type VideoFull = {
+  videoId: string;
+  title: string;
+  channelId: string;
+  channelTitle: string;
+  publishedAt: string;
+  thumbnail: string | null;
+  description: string;
+  durationSeconds: number;
+  hasCaption: boolean;
+  viewCount: number | null;
+};
+
+/**
+ * 영상 하나의 전체 정보. **1유닛.** 13 시청 화면이 열릴 때마다 씁니다.
+ *
+ * `listUploads`는 재생목록에서 오므로 snippet만 있고, `videoDetails`는 길이·자막만
+ * 줍니다(훑기 피드에서 이미 그걸로 충분해서 만든 함수입니다). 시청 화면은 설명까지
+ * 필요해서 따로 둡니다 — part를 늘려도 유닛 값은 그대로 1입니다.
+ */
+export async function videoInfo(videoId: string): Promise<YouTubeResult<VideoFull | null>> {
+  const res = await call<FullVideoResponse>("videos.list", {
+    part: "snippet,contentDetails,statistics",
+    id: videoId,
+  });
+  if (!res.ok) return res;
+
+  const it = res.data.items[0];
+  if (!it) return { ok: true, data: null };
+
+  return {
+    ok: true,
+    data: {
+      videoId: it.id,
+      title: it.snippet.title,
+      channelId: it.snippet.channelId,
+      channelTitle: it.snippet.channelTitle,
+      publishedAt: it.snippet.publishedAt,
+      thumbnail:
+        it.snippet.thumbnails?.medium?.url ?? it.snippet.thumbnails?.default?.url ?? null,
+      description: it.snippet.description,
+      durationSeconds: parseDuration(it.contentDetails.duration),
+      hasCaption: it.contentDetails.caption === "true",
+      viewCount: it.statistics?.viewCount ? Number(it.statistics.viewCount) : null,
+    },
+  };
+}

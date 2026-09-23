@@ -114,3 +114,22 @@ export type StreamError = {
   /** daily일 때만. 다음 PT 자정의 ISO 시각. */
   resetAt?: string;
 };
+
+export type VideoSummaryRequest = {
+  videoId: string;
+  title: string;
+  channelTitle: string;
+  /** YouTube 공식 API가 주는 값 — 자막을 못 받았을 때의 유일한 대체 근거입니다. */
+  description: string;
+  /** 프리셋 또는 직접 입력한 명령. 비어 있으면 고르게 요약합니다. */
+  instruction: string;
+  model?: string;
+};
+
+/** Gemini가 컨텍스트 초과를 알릴 때 흔히 쓰는 문구들. errors.ts의 kind와는 별개로,
+ *  같은 "other"라도 화면에서 다른 문구("토큰 초과")를 골라 보여 주는 데만 씁니다. */
+const TOKEN_LIMIT = /token.*(limit|exceed)|context.*length|too (long|many)|exceeds? the maximum/i;
+
+export function isTokenLimitMessage(message: string): boolean {
+  return TOKEN_LIMIT.test(message);
+}
