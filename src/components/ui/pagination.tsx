@@ -21,7 +21,7 @@ function Pagination({ className, ...props }: React.ComponentProps<"div">) {
 }
 
 const paginationLinkVariants = cva(
-  "inline-flex items-center justify-center rounded-none border font-mono text-xs transition-colors",
+  "inline-flex items-center justify-center rounded-[2px] border text-[0.8125rem] tabular-nums transition-colors",
   {
     variants: {
       variant: {

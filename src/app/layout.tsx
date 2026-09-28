@@ -7,7 +7,7 @@ import { buildSearchIndex } from "@/lib/build-search-index";
 
 export const metadata: Metadata = {
   title: { default: "기록실 INDEX.", template: "%s — 기록실 INDEX." },
-  description: "개발 일지 · 영상 요약 · 일반 글을 모아 두는 개인 기록 블로그.",
+  description: "개발 일지와 영상 요약, 가끔 쓰는 글을 모아 두는 개인 기록 블로그.",
   icons: {
     icon: [
       { url: "/favicon.svg", type: "image/svg+xml" },

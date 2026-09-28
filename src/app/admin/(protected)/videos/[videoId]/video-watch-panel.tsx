@@ -189,7 +189,7 @@ export function VideoWatchPanel({
           </div>
 
           <h1 className="mt-4 text-h4 leading-snug font-semibold text-text">{video.title}</h1>
-          <p className="mt-1.5 font-mono text-[0.75rem] text-text-muted">
+          <p className="mt-1.5 text-caption tabular-nums text-text-muted">
             {video.channelTitle}
             <span aria-hidden="true"> · </span>
             <time dateTime={video.publishedAt}>{formatDate(video.publishedAt.slice(0, 10))}</time>
@@ -210,7 +210,7 @@ export function VideoWatchPanel({
             <Alert variant="info" className="mt-4">
               <AlertTitle>이미 정리한 영상입니다</AlertTitle>
               <AlertDescription>
-                <Link href={`/admin/posts/${writtenSlug}`}>기존 글 보기 →</Link> — 다시 만들면
+                <Link href={`/admin/posts/${writtenSlug}`}>기존 글 보기</Link> — 다시 만들면
                 별도의 새 초안으로 저장됩니다.
               </AlertDescription>
             </Alert>
@@ -339,7 +339,7 @@ export function VideoWatchPanel({
             {(draft || streaming) && (
               <section className="mt-6 border-t border-border pt-4">
                 <div
-                  className="flex items-baseline justify-between gap-3 font-mono text-[0.6875rem] tracking-[0.08em] text-text-muted"
+                  className="flex items-baseline justify-between gap-3 text-[0.8125rem] font-semibold text-text-2 tabular-nums"
                   aria-live="polite"
                   aria-busy={streaming}
                 >

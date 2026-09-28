@@ -42,10 +42,7 @@ export default async function LoginPage({
   return (
     <div className="page login">
       <div className="login__box">
-        <p className="login__label">ADMIN</p>
-        <h1 className="login__title">
-          INDEX<span className="login__dot">.</span>
-        </h1>
+        <h1 className="login__title">관리자 로그인</h1>
         <p className="login__desc">
           이 사이트의 관리자 한 사람만 들어옵니다. 회원가입도, 비밀번호도 없습니다.
         </p>

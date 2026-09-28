@@ -33,7 +33,7 @@ const buttonVariants = cva(
         /** 44px — 디자인 시스템의 최소 터치 타겟 */
         default: "h-11 px-5",
         sm: "h-10 px-3 text-sm",
-        xs: "h-8 px-2.5 font-mono text-xs font-normal tracking-[0.04em]",
+        xs: "h-8 px-2.5 text-[0.8125rem] font-medium",
         lg: "h-12 px-6",
         icon: "size-11",
       },

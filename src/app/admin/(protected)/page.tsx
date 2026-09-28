@@ -69,7 +69,6 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
       <header className="admin-head">
         <div className="admin-head__row">
           <div>
-            <p className="admin-head__label">ADMIN</p>
             <h1 className="admin-head__title">대시보드</h1>
           </div>
           <Button asChild>
@@ -78,7 +77,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
         </div>
 
         <p className="admin-head__who">
-          <strong>{viewer?.login}</strong> · 전체 {posts.length}편
+          <strong>{viewer?.login}</strong>님, 글이 {posts.length}편 있습니다.
         </p>
         <RealtimePosts />
 
@@ -143,7 +142,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
 
               {post.status === "published" && !post.scheduled && (
                 <Link href={`/posts/${post.slug}`} className="queue-row__view">
-                  보기 <span aria-hidden="true">→</span>
+                  공개 화면에서 보기
                 </Link>
               )}
             </li>

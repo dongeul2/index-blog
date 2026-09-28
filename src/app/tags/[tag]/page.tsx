@@ -40,7 +40,7 @@ export default async function TagPage({ params }: { params: Promise<Params> }) {
         <p className="tag-head__count">
           {posts.length}편
           <span className="tag-head__sep" aria-hidden="true">/</span>
-          <Link href={archiveHref({ tag })}>아카이브에서 분류·연도까지 함께 좁히기 →</Link>
+          <Link href={archiveHref({ tag })}>아카이브에서 분류와 연도로 더 좁히기</Link>
         </p>
 
         {related.length > 0 && (
@@ -61,7 +61,7 @@ export default async function TagPage({ params }: { params: Promise<Params> }) {
       </header>
 
       {/* 태그 페이지는 페이지네이션이 아니라 「더 보기」입니다(디자인 시스템 규칙) */}
-      <Section label="POSTS" title="글">
+      <Section title="글">
         <LoadMore
           step={5}
           label="글"

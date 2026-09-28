@@ -18,7 +18,7 @@ export default async function TagsPage() {
       <header className="tags-head">
         <h1 className="tags-head__title">태그</h1>
         <p className="tags-head__count">
-          태그 {tags.length}종 · 글 {total}편
+          글 {total}편에 태그 {tags.length}개가 붙어 있습니다.
         </p>
       </header>
 

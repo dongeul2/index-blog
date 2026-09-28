@@ -331,7 +331,7 @@ export function ProjectForm({
             {linkState && (
               <Badge variant={REPO_LINK_BADGE[linkState]}>{REPO_LINK_LABEL[linkState]}</Badge>
             )}
-            <span className="font-mono text-[0.6875rem] text-text-muted">
+            <span className="text-caption tabular-nums text-text-muted">
               {syncedAt
                 ? `마지막 동기화 ${new Intl.DateTimeFormat("ko-KR", {
                     timeZone: "Asia/Seoul",

@@ -116,7 +116,7 @@ export function SiteSearch({ index }: { index: SearchItem[] }) {
         aria-expanded={open}
         aria-haspopup="dialog"
       >
-        검색 <span aria-hidden="true">⌘K</span>
+        검색 <span aria-hidden="true" className="search__kbd">⌘K</span>
         <span className="sr-only">, 단축키 커맨드 K</span>
       </Button>
 

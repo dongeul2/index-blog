@@ -23,7 +23,6 @@ export default async function AdminProjectsPage() {
       <header className="admin-head">
         <div className="admin-head__row">
           <div>
-            <p className="admin-head__label">ADMIN</p>
             <h1 className="admin-head__title">프로젝트</h1>
           </div>
           <Button asChild>
@@ -74,7 +73,7 @@ export default async function AdminProjectsPage() {
               </p>
 
               <Link href={`/projects/${p.slug}`} className="queue-row__view">
-                보기 <span aria-hidden="true">→</span>
+                공개 화면에서 보기
               </Link>
             </li>
           ))}

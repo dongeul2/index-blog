@@ -48,7 +48,6 @@ export default async function VideosPage({ searchParams }: { searchParams: Promi
       <header className="admin-head">
         <div className="admin-head__row">
           <div>
-            <p className="admin-head__label">ADMIN</p>
             <h1 className="admin-head__title">영상 브라우즈</h1>
           </div>
           <Button asChild variant="outline">
@@ -67,7 +66,7 @@ export default async function VideosPage({ searchParams }: { searchParams: Promi
         </p>
 
         {/* 이 화면이 얼마를 썼는지 숨기지 않습니다 */}
-        <p className="mt-2 font-mono text-[0.6875rem] tracking-[0.08em] text-text-muted">
+        <p className="mt-2 text-[0.8125rem] font-semibold text-text-2 tabular-nums">
           <output aria-live="polite">
             이번 훑기 {browse.unitsSpent}유닛 · 남은 유닛{" "}
             <span

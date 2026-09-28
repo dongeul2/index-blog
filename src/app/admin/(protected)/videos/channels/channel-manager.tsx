@@ -163,7 +163,7 @@ export function ChannelManager({
                   {found.channel.name} <span aria-hidden="true">↗</span>
                   <span className="sr-only">(새 탭에서 채널 열기)</span>
                 </p>
-                <p className="truncate font-mono text-[0.6875rem] text-text-muted">
+                <p className="truncate text-caption tabular-nums text-text-muted">
                   {found.channel.handle ?? found.channel.id}
                 </p>
               </div>
@@ -181,7 +181,7 @@ export function ChannelManager({
 
       {/* ---------- 목록 ---------- */}
       <section className="mt-10">
-        <p className="font-mono text-[0.6875rem] tracking-[0.08em] text-text-muted">
+        <p className="text-[0.8125rem] font-semibold text-text-2 tabular-nums">
           구독 {channels.length}개
         </p>
 
@@ -194,7 +194,7 @@ export function ChannelManager({
               >
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-semibold text-text">{c.name}</p>
-                  <p className="truncate font-mono text-[0.6875rem] text-text-muted">
+                  <p className="truncate text-caption tabular-nums text-text-muted">
                     {c.handle ?? c.id}
                     <span aria-hidden="true"> · </span>
                     요약 글 {postsPerChannel[c.id] ?? 0}편

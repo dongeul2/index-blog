@@ -55,7 +55,7 @@ export default async function ArchivePage({
         <h1 className="archive__title">아카이브</h1>
         {/* 필터를 바꾸면 결과 개수를 소리로도 알립니다 */}
         <p className="archive__count" role="status" aria-live="polite">
-          {active.length > 0 ? `${active.join(" · ")} — ` : ""}
+          {active.length > 0 ? `${active.join(", ")}에서 ` : ""}
           {total}개의 글
           {totalPages > 1 && (
             <span className="archive__page-of">

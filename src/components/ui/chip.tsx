@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
  * `pointer-events`로만 막으면 키보드로는 여전히 눌립니다.
  */
 const chipVariants = cva(
-  "inline-flex items-center gap-1.5 rounded-none border px-2.5 font-mono text-xs transition-colors max-md:h-8 md:h-7",
+  "inline-flex items-center gap-1.5 rounded-[2px] border px-2.5 text-[0.8125rem] transition-colors max-md:h-8 md:h-7",
   {
     variants: {
       variant: {
@@ -41,7 +41,7 @@ function ChipCount({ className, ...props }: React.ComponentProps<"span">) {
   return (
     <span
       data-slot="chip-count"
-      className={cn("text-[0.6875rem] text-current opacity-70", className)}
+      className={cn("text-xs text-current opacity-70", className)}
       {...props}
     />
   );

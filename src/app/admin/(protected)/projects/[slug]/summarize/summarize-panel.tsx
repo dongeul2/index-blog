@@ -218,7 +218,7 @@ export function SummarizePanel({
 
       {/* 커밋 고르기 */}
       <div className="summarize__commits">
-        <p className="font-mono text-[0.6875rem] tracking-[0.08em] text-text-muted">
+        <p className="text-[0.8125rem] font-semibold text-text-2 tabular-nums">
           커밋 {chosen.length}건 선택됨 {inRange.length !== chosen.length && `(${inRange.length}건 중)`}
         </p>
         {inRange.length > 0 ? (

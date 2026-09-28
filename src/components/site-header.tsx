@@ -89,7 +89,7 @@ export function SiteHeader({ searchIndex }: { searchIndex: SearchItem[] }) {
               <Link
                 key={n.href}
                 href={n.href}
-                className="nav-link"
+                className={n.href === "/" ? "nav-link nav-link--home" : "nav-link"}
                 aria-current={pathname === n.href ? "page" : undefined}
               >
                 {n.label}

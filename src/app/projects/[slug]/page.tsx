@@ -153,7 +153,7 @@ export default async function ProjectPage({ params }: { params: Promise<Params> 
         )}
       </header>
 
-      <Section label="README" title="README">
+      <Section title="README">
         {readmeTree ? (
           <div className="readme">
             <Markdown tree={readmeTree} />
@@ -168,7 +168,6 @@ export default async function ProjectPage({ params }: { params: Promise<Params> 
       </Section>
 
       <Section
-        label="COMMITS"
         title="최근 커밋"
         more={repoUrl ? { href: `${repoUrl}/commits`, text: "GitHub에서 보기" } : undefined}
       >
@@ -192,7 +191,7 @@ export default async function ProjectPage({ params }: { params: Promise<Params> 
         )}
       </Section>
 
-      <Section label="PULL REQUESTS" title="Pull Request">
+      <Section title="Pull Request">
         {pulls.length > 0 ? (
           <ol className="repo-list">
             {pulls.map((pr) => (
@@ -214,7 +213,7 @@ export default async function ProjectPage({ params }: { params: Promise<Params> 
         )}
       </Section>
 
-      <Section label="DEVLOG" title="개발 일지">
+      <Section title="개발 일지">
         {devlogs.length > 0 ? (
           <ol className="timeline">
             {devlogs.map((p) => (

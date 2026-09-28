@@ -49,7 +49,7 @@ export function LoadMore({
             onClick={() => setShown((n) => n + step)}
           >
             {label} {Math.min(step, rest)}건 더 보기
-            <span className="font-mono text-xs font-normal text-text-muted">남은 {rest}건</span>
+            <span className="text-caption font-normal tabular-nums text-text-muted">남은 {rest}건</span>
           </Button>
         </p>
       )}

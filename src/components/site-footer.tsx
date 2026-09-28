@@ -6,10 +6,10 @@ export function SiteFooter() {
       <div className="page site-footer__inner">
         <div>
           <Link href="/" className="logo">
-            INDEX<span className="logo__dot">.</span>
+            INDEX.
           </Link>
           <p className="site-footer__note" style={{ marginTop: "0.5rem" }}>
-            개발 일지 · 영상 요약 · 일반 글
+            개발 일지와 영상 요약, 그리고 가끔 쓰는 글.
           </p>
         </div>
         <div className="site-footer__links">

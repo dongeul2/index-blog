@@ -42,7 +42,7 @@ function FieldDescription({ className, ...props }: React.ComponentProps<"p">) {
   return (
     <p
       data-slot="field-description"
-      className={cn("text-[0.6875rem] leading-normal text-text-muted", className)}
+      className={cn("text-xs leading-normal text-text-muted", className)}
       {...props}
     />
   );
@@ -54,7 +54,7 @@ function FieldError({ className, ...props }: React.ComponentProps<"p">) {
       data-slot="field-error"
       role="status"
       aria-live="polite"
-      className={cn("text-[0.6875rem] leading-normal text-danger", className)}
+      className={cn("text-xs leading-normal text-danger", className)}
       {...props}
     />
   );

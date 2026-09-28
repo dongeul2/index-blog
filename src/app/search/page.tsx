@@ -56,7 +56,7 @@ export default async function SearchPage({
         <p className="search-page__count" role="status" aria-live="polite">
           {q ? (
             <>
-              &lsquo;{q}&rsquo; — 글 {posts.length}건 · 프로젝트 {projects.length}건
+              &lsquo;{q}&rsquo;로 글 {posts.length}건, 프로젝트 {projects.length}건을 찾았습니다.
             </>
           ) : (
             "검색어를 입력하세요."
@@ -68,13 +68,13 @@ export default async function SearchPage({
         <div className="empty-state search-page__empty">
           <p>&lsquo;{q}&rsquo;와 일치하는 글이 없습니다</p>
           <p style={{ marginTop: "1rem" }}>
-            <Link href="/archive">아카이브에서 분류·태그로 찾아보기 →</Link>
+            <Link href="/archive">아카이브에서 분류와 태그로 찾아보기</Link>
           </p>
         </div>
       )}
 
       {posts.length > 0 && (
-        <Section label="POSTS" title={`글 ${posts.length}건`}>
+        <Section title={`글 ${posts.length}건`}>
           <LoadMore
             step={5}
             label="글"
@@ -89,7 +89,7 @@ export default async function SearchPage({
       )}
 
       {projects.length > 0 && (
-        <Section label="PROJECTS" title={`프로젝트 ${projects.length}건`}>
+        <Section title={`프로젝트 ${projects.length}건`}>
           <ul className="project-grid">
             {projects.map((project, i) => (
               <li key={project.slug}>
@@ -102,7 +102,7 @@ export default async function SearchPage({
 
       {/* 검색어가 없을 때는 빈 화면 대신 최근 글로 회수합니다 */}
       {!q && (
-        <Section label="RECENT" title="최근 글" more={{ href: "/archive", text: "아카이브" }}>
+        <Section title="최근 글" more={{ href: "/archive", text: "아카이브" }}>
           <ul className="search-page__recent">
             {recent.slice(0, 6).map((p) => (
               <li key={p.slug}>

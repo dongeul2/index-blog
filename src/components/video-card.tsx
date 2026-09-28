@@ -44,7 +44,7 @@ export function VideoCard({ video }: { video: BrowseVideo }) {
             />
           )}
           {video.durationSeconds !== null && (
-            <span className="absolute right-1 bottom-1 bg-black/[0.78] px-1.5 py-0.5 font-mono text-[11px] text-on-media">
+            <span className="absolute right-1 bottom-1 bg-black/[0.78] px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-on-media">
               {formatDuration(video.durationSeconds)}
               <span className="sr-only">, 재생 시간 {spokenDuration(video.durationSeconds)}</span>
             </span>
@@ -57,7 +57,7 @@ export function VideoCard({ video }: { video: BrowseVideo }) {
       </Link>
 
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-3 pb-3">
-        <p className="min-w-0 truncate font-mono text-[0.6875rem] text-text-muted">
+        <p className="min-w-0 truncate text-caption tabular-nums text-text-muted">
           {video.channelTitle}
           <span aria-hidden="true"> · </span>
           <time dateTime={video.publishedAt}>{formatDate(video.publishedAt.slice(0, 10))}</time>
@@ -74,7 +74,6 @@ export function VideoCard({ video }: { video: BrowseVideo }) {
             <Link href={`/admin/posts/${video.writtenSlug}`}>
               정리한 글
               <span className="sr-only">, 이미 글로 정리한 영상입니다</span>
-              <span aria-hidden="true">→</span>
             </Link>
           </Button>
         ) : (

@@ -83,7 +83,7 @@ export function BookmarksWidget({ bookmarks }: { bookmarks: Bookmark[] }) {
     <ToastProvider swipeDirection="left">
       <div className="mt-6">
         <div className="flex flex-wrap items-center gap-2">
-          <p className="mr-1 font-mono text-[0.6875rem] tracking-[0.08em] text-text-muted">
+          <p className="mr-1 text-[0.8125rem] font-semibold text-text-2 tabular-nums">
             바로가기
           </p>
 

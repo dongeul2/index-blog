@@ -33,7 +33,7 @@ export function QuotaMeter({
 
   return (
     <div className={cn("flex min-w-0 flex-col gap-1.5", className)}>
-      <p className="flex items-baseline justify-between gap-3 font-mono text-[0.6875rem] tracking-[0.08em] text-text-muted">
+      <p className="flex items-baseline justify-between gap-3 text-[0.8125rem] font-semibold text-text-2 tabular-nums">
         <span>{label}</span>
         {level && (
           <span
@@ -59,7 +59,7 @@ export function QuotaMeter({
       </output>
 
       {known && <Progress value={percent} tone={level ?? "ok"} aria-hidden="true" />}
-      {note && <p className="text-[0.6875rem] leading-normal text-text-muted">{note}</p>}
+      {note && <p className="text-xs leading-normal text-text-muted">{note}</p>}
     </div>
   );
 }

@@ -56,7 +56,7 @@ export function ProjectCard({ project, devlogs }: { project: Project; devlogs: n
           href={project.siteUrl}
           target="_blank"
           rel="noreferrer noopener"
-          className="absolute top-3 right-3 z-10 border border-border-strong bg-elevated px-2 py-1 font-mono text-[0.6875rem] text-text-2 shadow-elevated transition-colors hover:border-accent hover:text-accent hover:no-underline"
+          className="absolute top-3 right-3 z-10 border border-border-strong bg-elevated px-2 py-1 text-caption tabular-nums text-text-2 shadow-elevated transition-colors hover:border-accent hover:text-accent hover:no-underline"
         >
           사이트 <span aria-hidden="true">↗</span>
         </a>

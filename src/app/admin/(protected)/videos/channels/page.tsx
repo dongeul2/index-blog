@@ -38,7 +38,6 @@ export default async function ChannelsPage() {
       <header className="admin-head">
         <div className="admin-head__row">
           <div>
-            <p className="admin-head__label">ADMIN</p>
             <h1 className="admin-head__title">채널 구독 관리</h1>
           </div>
           <Button asChild variant="outline">

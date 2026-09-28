@@ -50,20 +50,18 @@ export default async function ProjectsPage() {
       <header className="projects-head">
         <h1 className="projects-head__title">프로젝트</h1>
         <p className="projects-head__sub">
-          하나의 프로젝트 = 하나의 저장소 + 그에 속한 개발 일지들. 코드를 편집하는 곳이 아니라
-          기록하고 보여주는 층입니다.
+          저장소 하나마다 프로젝트 하나를 두고, 그 저장소에서 나온 개발 일지를 함께 묶어 둡니다.
         </p>
         <p className="projects-head__count">
-          전체 {all.length}개 · 진행 중 {active.length} · 보관됨 {archived.length} · 묶인 일지{" "}
-          {devlogTotal}편
+          진행 중 {active.length}개, 보관 {archived.length}개. 일지는 모두 {devlogTotal}편입니다.
         </p>
       </header>
 
-      <Section label="ACTIVE" title="진행 중">
+      <Section title="진행 중">
         <Grid projects={active} devlogs={devlogs} empty="진행 중인 프로젝트가 없습니다." />
       </Section>
 
-      <Section label="ARCHIVED" title="보관됨">
+      <Section title="보관됨">
         <Grid projects={archived} devlogs={devlogs} empty="보관된 프로젝트가 없습니다." archived />
       </Section>
     </div>
