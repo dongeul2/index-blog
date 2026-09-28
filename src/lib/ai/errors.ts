@@ -80,7 +80,7 @@ export function humanMessage(c: Classified, modelLabel: string): string {
     case "rate":
       return `${modelLabel}이 잠시 몰렸습니다. 몇 초 뒤 다시 시도해 보세요.`;
     case "auth":
-      return "GEMINI_API_KEY 가 없거나 권한이 없습니다. .env.local 을 확인하세요.";
+      return "GEMINI_API_KEY 가 없거나 권한이 없습니다. 환경변수(로컬 .env.local · 배포 Vercel)를 확인하세요.";
     default:
       return c.message;
   }

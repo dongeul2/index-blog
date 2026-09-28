@@ -104,7 +104,7 @@ export async function generate(opts: CallOptions): Promise<GenerateResult> {
     const error: StreamError = {
       kind: "auth",
       model,
-      message: "GEMINI_API_KEY 가 .env.local 에 없습니다.",
+      message: "GEMINI_API_KEY 환경변수가 없습니다. (로컬: .env.local · 배포: Vercel 환경변수)",
     };
     return { ok: false, error };
   }
@@ -221,7 +221,7 @@ export async function streamGenerate(opts: CallOptions): Promise<ReadableStream<
       };
 
       try {
-        if (!hasApiKey()) throw new Error("GEMINI_API_KEY 가 .env.local 에 없습니다.");
+        if (!hasApiKey()) throw new Error("GEMINI_API_KEY 환경변수가 없습니다. (로컬: .env.local · 배포: Vercel 환경변수)");
 
         const stream = await client().interactions.create({
           model,

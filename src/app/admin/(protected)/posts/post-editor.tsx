@@ -8,6 +8,8 @@ import { parseMarkdown, prepare, readingMinutes } from "@/lib/markdown";
 import { CATEGORIES, CATEGORY_LABEL, type Category, type Source } from "@/lib/content-types";
 import { STATUS_LABEL, type PostStatus } from "@/lib/post-status";
 import { deletePost, savePost, type PostInput } from "./actions";
+import { assist } from "./ai-actions";
+import type { AssistTask } from "@/lib/ai/prompts";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -101,6 +103,11 @@ export function PostEditor({ post }: { post: EditorPost }) {
   const [error, setError] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
+  // AI 보조 — 한 번에 하나만. 결과는 입력칸에 바로 넣되 제목만은 후보로 보여 주고 고르게 합니다.
+  const [aiBusy, setAiBusy] = useState<AssistTask | null>(null);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [titleOptions, setTitleOptions] = useState<string[]>([]);
+
   const initial = post.publishedAt ? seoulParts(post.publishedAt) : { date: "", time: "" };
   const [date, setDate] = useState(initial.date);
   const [time, setTime] = useState(initial.time);
@@ -178,6 +185,40 @@ export function PostEditor({ post }: { post: EditorPost }) {
     });
   }
 
+  async function suggest(task: AssistTask) {
+    setAiBusy(task);
+    setAiError(null);
+    const result = await assist(task, {
+      title: draft.title,
+      summary: draft.summary,
+      body: draft.body,
+    });
+    setAiBusy(null);
+
+    if (!result.ok) {
+      setAiError(result.error.message);
+      return;
+    }
+    if (result.task === "summary") set("summary", result.summary);
+    if (result.task === "tags") set("tags", result.tags);
+    if (result.task === "titles") setTitleOptions(result.titles);
+  }
+
+  /** AI 버튼 하나. 도는 동안엔 모든 AI 버튼을 잠급니다 — 쿼터를 겹쳐 쓰지 않게. */
+  const aiButton = (task: AssistTask, label: string) => (
+    <Button
+      type="button"
+      variant="ghost"
+      size="xs"
+      className="flex-none"
+      onClick={() => void suggest(task)}
+      disabled={aiBusy !== null}
+      aria-busy={aiBusy === task}
+    >
+      {aiBusy === task ? "생각 중…" : label}
+    </Button>
+  );
+
   async function remove() {
     setConfirmOpen(false);
     if (!draft.originalSlug) return;
@@ -214,6 +255,40 @@ export function PostEditor({ post }: { post: EditorPost }) {
           placeholder="제목"
           aria-label="제목"
         />
+
+        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          {titleOptions.length === 0 ? (
+            aiButton("titles", "AI 제목 후보")
+          ) : (
+            <>
+              {titleOptions.map((t) => (
+                <Button
+                  key={t}
+                  type="button"
+                  variant="outline"
+                  size="xs"
+                  className="h-auto min-h-8 py-1 text-left font-sans whitespace-normal"
+                  onClick={() => {
+                    set("title", t);
+                    setTitleOptions([]);
+                  }}
+                >
+                  {t}
+                </Button>
+              ))}
+              <Button type="button" variant="ghost" size="xs" onClick={() => setTitleOptions([])}>
+                닫기
+              </Button>
+            </>
+          )}
+        </div>
+
+        {aiError && (
+          <Alert variant="danger" className="mt-4 max-w-(--container-prose)">
+            <AlertTitle>AI 제안을 받지 못했습니다</AlertTitle>
+            <AlertDescription>{aiError}</AlertDescription>
+          </Alert>
+        )}
 
         {error && (
           <Alert variant="danger" className="mt-4 max-w-(--container-prose)">
@@ -290,23 +365,29 @@ export function PostEditor({ post }: { post: EditorPost }) {
 
         <Field wide>
           <FieldLabel htmlFor="post-tags">태그</FieldLabel>
-          <Input
-            id="post-tags"
-            value={draft.tags}
-            onChange={(e) => set("tags", e.target.value)}
-            placeholder="react, 접근성, toc"
-          />
+          <div className="flex items-center gap-2">
+            <Input
+              id="post-tags"
+              value={draft.tags}
+              onChange={(e) => set("tags", e.target.value)}
+              placeholder="react, 접근성, toc"
+            />
+            {aiButton("tags", "AI 제안")}
+          </div>
           <FieldDescription>쉼표로 구분</FieldDescription>
         </Field>
 
         <Field wide>
           <FieldLabel htmlFor="post-summary">요약</FieldLabel>
-          <Input
-            id="post-summary"
-            value={draft.summary}
-            onChange={(e) => set("summary", e.target.value)}
-            placeholder="목록과 검색에 쓰이는 한 줄"
-          />
+          <div className="flex items-center gap-2">
+            <Input
+              id="post-summary"
+              value={draft.summary}
+              onChange={(e) => set("summary", e.target.value)}
+              placeholder="목록과 검색에 쓰이는 한 줄"
+            />
+            {aiButton("summary", "AI 제안")}
+          </div>
         </Field>
 
         <Field>

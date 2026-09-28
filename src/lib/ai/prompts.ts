@@ -152,3 +152,60 @@ export const videoSummaryMessages = (
   system: VIDEO_SUMMARY_SYSTEM,
   input: buildVideoSummaryPrompt(req, source),
 });
+
+/**
+ * 에디터 보조 — 요약문·태그·제목 후보.
+ *
+ * 셋 다 짧은 답이라 스트리밍 없이 한 번에 받습니다(`generate()`).
+ * 형식을 한 줄 단위로 못 박아 두는 이유는 파싱입니다 — 모델이 머리말이나 번호를
+ * 붙이면 그대로 입력칸에 들어가 버립니다.
+ */
+export type AssistTask = "summary" | "tags" | "titles";
+
+const ASSIST_BASE = `당신은 개인 기술 블로그 「기록실 INDEX.」의 편집을 돕습니다.
+- 본문에 없는 내용을 지어내지 마세요.
+- 한국어로 씁니다. 과장·감탄·마케팅 어투를 쓰지 않습니다.
+- 요청한 형식만 출력하세요. 머리말, 설명, 따옴표, 번호, 마크다운을 붙이지 마세요.`;
+
+const ASSIST_SYSTEM: Record<AssistTask, string> = {
+  summary: `${ASSIST_BASE}
+
+목록과 검색 결과에 뜨는 한 줄 요약을 씁니다.
+- 한 문장, 80자 이내.
+- 글이 무엇을 다루는지 드러나게. "이 글에서는" 같은 머리말 없이 바로 씁니다.`,
+  tags: `${ASSIST_BASE}
+
+글에 붙일 태그를 3~6개 고릅니다.
+- 쉼표로 구분한 한 줄로만 출력합니다. 예: react, 접근성, toc
+- 기술 이름은 원래 표기(영문 소문자)를, 개념은 짧은 한국어 명사를 씁니다.
+- 너무 넓은 태그("개발", "프로그래밍")는 피합니다.
+- 이미 쓰는 태그 목록이 주어지면, 뜻이 같을 때는 그 표기를 그대로 씁니다.`,
+  titles: `${ASSIST_BASE}
+
+제목 후보를 5개 씁니다.
+- 한 줄에 하나씩, 5줄만 출력합니다.
+- 무엇을 했는지가 드러나되 밋밋하지 않게. 40자 이내.
+- 서로 결이 다르게 — 직설형, 질문형, 결과 중심 등을 섞습니다.`,
+};
+
+/** 본문이 길면 앞부분만 보냅니다 — 요약·태그·제목은 앞 몇천 자로 충분하고 쿼터는 아껴야 합니다. */
+const ASSIST_BODY_LIMIT = 12_000;
+
+export function assistMessages(
+  task: AssistTask,
+  post: { title: string; summary: string; body: string; knownTags?: string[] },
+) {
+  const body =
+    post.body.length > ASSIST_BODY_LIMIT
+      ? `${post.body.slice(0, ASSIST_BODY_LIMIT)}\n\n(… 이하 생략)`
+      : post.body;
+
+  const lines = [`제목: ${post.title.trim() || "(없음)"}`];
+  if (post.summary.trim() && task !== "summary") lines.push(`요약: ${post.summary.trim()}`);
+  if (task === "tags" && post.knownTags?.length) {
+    lines.push(`이미 쓰는 태그: ${post.knownTags.join(", ")}`);
+  }
+  lines.push("", "## 본문", body);
+
+  return { system: ASSIST_SYSTEM[task], input: lines.join("\n") };
+}
