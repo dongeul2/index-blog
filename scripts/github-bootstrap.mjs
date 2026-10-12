@@ -1,6 +1,6 @@
 /**
  * GitHub 저장소를 문서대로 맞춥니다 — 라벨(.github/labels.yml), 마일스톤·이슈(docs/ROADMAP.md),
- * main 브랜치 보호. `gh` CLI 인증을 그대로 씁니다.
+ * main 브랜치 보호, 병합 방식, Actions 권한. `gh` CLI 인증을 그대로 씁니다.
  *
  *   node scripts/github-bootstrap.mjs           # 무엇을 할지 출력만 (기본)
  *   node scripts/github-bootstrap.mjs --apply   # 실제로 반영
@@ -110,5 +110,11 @@ act("병합 방식: 스쿼시만 · PR 제목을 커밋 제목으로 · 병합 �
     "-F", "allow_squash_merge=true", "-F", "allow_merge_commit=false", "-F", "allow_rebase_merge=false",
     "-f", "squash_merge_commit_title=PR_TITLE", "-f", "squash_merge_commit_message=PR_BODY",
     "-F", "delete_branch_on_merge=true",
+  ]),
+);
+act("Actions 권한: 기본 토큰은 읽기 전용 · 워크플로가 PR을 열 수 있게(release-please)", () =>
+  gh([
+    "api", "-X", "PUT", `repos/${repo}/actions/permissions/workflow`,
+    "-f", "default_workflow_permissions=read", "-F", "can_approve_pull_request_reviews=true",
   ]),
 );
