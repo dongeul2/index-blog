@@ -43,3 +43,8 @@ next-env.d.ts
 # agent skills — npx skills add 로 복원합니다 (skills-lock.json 이 버전을 고정)
 /.agents/
 /.claude/skills/
+
+# playwright
+/test-results/
+/playwright-report/
+/blob-report/
