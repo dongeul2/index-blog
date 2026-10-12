@@ -6,7 +6,9 @@
 ```bash
 npm run dev     # http://localhost:3000
 npm run build
-npx eslint src
+npm run lint && npm run typecheck
+npm test               # Vitest 단위 테스트
+npm run test:e2e       # Playwright E2E (데스크톱·모바일 + axe 접근성)
 
 node --env-file=.env.local scripts/seed-posts.mjs   # content/posts/*.md → DB (slug 기준 upsert)
 node --env-file=.env.local scripts/check-rls.mjs    # 공개 키로 RLS가 실제로 막는지 확인
@@ -14,6 +16,15 @@ node --env-file=.env.local scripts/check-rls.mjs    # 공개 키로 RLS가 실�
 
 `.env.local`에 필요한 값: `NEXT_PUBLIC_SUPABASE_URL`, 공개 키(`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 또는 `..._ANON_KEY`), `SUPABASE_SERVICE_ROLE_KEY`(스크립트 전용), `ADMIN_GITHUB_LOGIN`.
+
+## 작업 방식
+
+이슈 → 브랜치 → PR(CI) → 스쿼시 병합 → release-please 릴리스. 자세한 규칙은
+[CONTRIBUTING.md](CONTRIBUTING.md), 설계 결정은 [docs/adr/](docs/adr/), 진행 계획은
+[docs/ROADMAP.md](docs/ROADMAP.md)에 있습니다. GitHub 라벨·마일스톤·이슈·브랜치 보호는
+`node scripts/github-bootstrap.mjs --apply`로 문서와 맞춥니다(`gh` 로그인 필요).
+
+CI는 저장소 변수 `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`를 씁니다.
 
 ## 구현 상태
 

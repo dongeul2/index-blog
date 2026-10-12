@@ -1,0 +1,30 @@
+name: PR title
+
+# 스쿼시 병합하면 PR 제목이 곧 main의 커밋 메시지이고, release-please가 그것으로 버전과
+# CHANGELOG를 정합니다. 그래서 커밋 하나하나가 아니라 PR 제목을 Conventional Commits로 검사합니다.
+on:
+  pull_request_target:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: amannn/action-semantic-pull-request@v6
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            perf
+            refactor
+            style
+            test
+            docs
+            build
+            ci
+            chore
