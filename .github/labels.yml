@@ -1,0 +1,19 @@
+# 라벨의 정본. scripts/sync-labels.mjs 가 이 파일대로 GitHub 라벨을 맞춥니다.
+- { name: "type:feature", color: "4f7cff", description: "새 기능·화면" }
+- { name: "type:bug", color: "e5484d", description: "기대와 다른 동작" }
+- { name: "type:chore", color: "8b8d98", description: "도구·설정·정리" }
+- { name: "type:docs", color: "0d74ce", description: "문서·ADR" }
+- { name: "type:test", color: "30a46c", description: "테스트 추가·보강" }
+- { name: "area:planning", color: "c2a8f5", description: "기획·IA·요구사항" }
+- { name: "area:design", color: "f5a8d4", description: "디자인 시스템·모션" }
+- { name: "area:frontend", color: "a8d4f5", description: "화면·컴포넌트" }
+- { name: "area:backend", color: "a8f5c2", description: "DB·RLS·API" }
+- { name: "area:ai", color: "f5e3a8", description: "AI 기능·하네스" }
+- { name: "area:realtime", color: "f5c2a8", description: "Realtime·WebSocket" }
+- { name: "area:qa", color: "b5f5a8", description: "테스트·접근성·성능" }
+- { name: "area:infra", color: "d4d4d4", description: "CI·배포·모니터링" }
+- { name: "status:triage", color: "fbca04", description: "분류 전" }
+- { name: "status:blocked", color: "b60205", description: "막힘" }
+- { name: "priority:high", color: "d93f0b", description: "먼저" }
+- { name: "deps", color: "0366d6", description: "의존성 업데이트" }
+- { name: "ci", color: "000000", description: "CI 설정" }

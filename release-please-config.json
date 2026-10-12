@@ -1,0 +1,22 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "packages": {
+    ".": {
+      "release-type": "node",
+      "package-name": "index-blog",
+      "bump-minor-pre-major": true,
+      "changelog-sections": [
+        { "type": "feat", "section": "기능" },
+        { "type": "fix", "section": "버그 수정" },
+        { "type": "perf", "section": "성능" },
+        { "type": "refactor", "section": "리팩터링" },
+        { "type": "style", "section": "디자인" },
+        { "type": "test", "section": "테스트" },
+        { "type": "docs", "section": "문서" },
+        { "type": "ci", "section": "CI", "hidden": true },
+        { "type": "build", "section": "빌드", "hidden": true },
+        { "type": "chore", "section": "기타", "hidden": true }
+      ]
+    }
+  }
+}

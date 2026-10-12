@@ -1,0 +1,33 @@
+name: 버그
+description: 기대와 다르게 동작하는 것
+labels: [type:bug, status:triage]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: 무슨 일이
+      description: 기대한 것과 실제로 일어난 것
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: 재현 방법
+      placeholder: "1. /archive?tag=rls 로 이동\n2. ..."
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: 환경
+      placeholder: "Chrome 140 / iOS Safari, 라이트 모드"
+  - type: dropdown
+    id: severity
+    attributes:
+      label: 심각도
+      options: ["P0 — 서비스 불가", "P1 — 주요 기능 오류", "P2 — 우회 가능", "P3 — 사소함"]
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: "수정 PR에는 이 버그를 다시 잡는 테스트를 함께 넣습니다."

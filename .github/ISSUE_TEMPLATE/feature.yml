@@ -1,0 +1,28 @@
+name: 기능 제안
+description: 새 기능이나 화면 — 기획 단계의 기록이 됩니다
+labels: [type:feature, status:triage]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: 문제 / 목표
+      description: 누가, 무엇 때문에 불편한가. 해결책보다 문제를 먼저 씁니다.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: 범위
+      description: 이번에 하는 것 / 하지 않는 것
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 완료 조건
+      description: 테스트로 옮길 수 있는 문장으로
+      placeholder: "- [ ] /work 목록에서 회사 프로젝트만 보인다"
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: 설계 메모 · 참고
