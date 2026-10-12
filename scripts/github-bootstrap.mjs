@@ -4,6 +4,7 @@
  *
  *   node scripts/github-bootstrap.mjs           # 무엇을 할지 출력만 (기본)
  *   node scripts/github-bootstrap.mjs --apply   # 실제로 반영
+ *   node scripts/github-bootstrap.mjs --apply --pr 1   # 완료 항목을 닫을 때 그 PR을 언급
  *
  * 여러 번 돌려도 안전합니다 — 이미 있는 라벨은 갱신, 같은 제목의 마일스톤·이슈는 건너뜁니다.
  * 완료(`- [x]`) 항목은 이슈를 만든 뒤 바로 닫아 기록만 남깁니다.
@@ -12,6 +13,7 @@ import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 
 const APPLY = process.argv.includes("--apply");
+const PR = process.argv.includes("--pr") ? process.argv[process.argv.indexOf("--pr") + 1] : undefined;
 const REQUIRED_CHECKS = ["Lint · Typecheck · Unit", "Build · E2E"];
 
 const gh = (args, input) =>
@@ -79,7 +81,7 @@ for (const ms of milestones) {
         "--milestone", ms.title,
         ...it.labels.flatMap((l) => ["--label", l]),
       ]);
-      if (it.done) gh(["issue", "close", url, "--reason", "completed", "--comment", "M0 부트스트랩 PR에서 완료"]);
+      if (it.done) gh(["issue", "close", url, "--reason", "completed", "--comment", PR ? `#${PR}에서 완료` : "완료"]);
     });
   }
 }
@@ -94,9 +96,14 @@ const protection = {
   allow_force_pushes: false,
   allow_deletions: false,
 };
-act(`main 보호: 필수 검사 ${REQUIRED_CHECKS.join(", ")} · 선형 이력 · 강제 푸시 금지`, () =>
-  gh(["api", "-X", "PUT", `repos/${repo}/branches/main/protection`, "--input", "-"], JSON.stringify(protection)),
-);
+act(`main 보호: 필수 검사 ${REQUIRED_CHECKS.join(", ")} · 선형 이력 · 강제 푸시 금지`, () => {
+  try {
+    gh(["api", "-X", "PUT", `repos/${repo}/branches/main/protection`, "--input", "-"], JSON.stringify(protection));
+  } catch {
+    // 무료 플랜의 비공개 저장소는 브랜치 보호를 쓸 수 없습니다(403). 나머지 단계는 계속합니다.
+    console.warn("  ! main 보호 실패 — 비공개 저장소라면 공개로 바꾸거나 Pro 플랜이 필요합니다");
+  }
+});
 act("병합 방식: 스쿼시만 · PR 제목을 커밋 제목으로 · 병합 후 브랜치 삭제", () =>
   gh([
     "api", "-X", "PATCH", `repos/${repo}`,

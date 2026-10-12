@@ -12,7 +12,7 @@
 - [x] PR·이슈 템플릿, 라벨 체계, PR 제목 Conventional Commits 검사 `type:chore` `area:infra`
 - [x] release-please로 SemVer 태그·CHANGELOG 자동화 `type:chore` `area:infra`
 - [x] 작업 방식(CONTRIBUTING)과 ADR 0001–0004 `type:docs` `area:planning`
-- [ ] main 브랜치 보호, 저장소 변수(Supabase 공개 URL·키) 설정 `type:chore` `area:infra`
+- [x] main 브랜치 보호, 저장소 변수(Supabase 공개 URL·키) 설정 `type:chore` `area:infra`
 - [ ] Vercel PR 미리보기 배포 연결 `type:chore` `area:infra`
 
 ## M1 · 정리와 데이터 구조
