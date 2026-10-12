@@ -19,6 +19,8 @@
 5. **병합은 스쿼시.** PR 하나 = `main`의 커밋 하나 = CHANGELOG 한 줄.
 6. **릴리스.** release-please가 릴리스 PR을 열어 두고, 그것을 병합하면 SemVer 태그와
    GitHub Release가 만들어집니다. `feat` → minor, `fix` → patch (1.0 전에는 `feat`도 minor 한 단계).
+   릴리스 PR에서도 CI가 돌도록 release-please는 전용 토큰(`RELEASE_PLEASE_TOKEN` 시크릿 —
+   index-blog 한 곳, Contents·Pull requests 쓰기)으로 PR을 엽니다. 만료 전에 교체합니다.
 
 ## 테스트 전략
 
