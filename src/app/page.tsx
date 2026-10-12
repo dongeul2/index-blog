@@ -218,7 +218,12 @@ export default async function Home() {
             ))}
           </ul>
           <p className="mt-3 text-caption text-text-muted">
-            <a href="https://news.ycombinator.com/" target="_blank" rel="noreferrer noopener">
+            <a
+              href="https://news.ycombinator.com/"
+              target="_blank"
+              rel="noreferrer noopener"
+              className="underline underline-offset-2"
+            >
               Hacker News
             </a>
             의 인기 글을 한 시간마다 가져옵니다.
