@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.0](https://github.com/dongeul2/index-blog/compare/index-blog-v0.2.1...index-blog-v0.3.0) (2026-10-13)
+
+
+### 기능
+
+* **db:** 경력·역량 테이블과 프로젝트 포트폴리오 필드 ([#60](https://github.com/dongeul2/index-blog/issues/60)) ([2e4856f](https://github.com/dongeul2/index-blog/commit/2e4856f46090013b88407082010c021a5fffc780))
+* 원페이지 포트폴리오 홈, 홈에서 바로 편집, 블로그형 에디터 ([#62](https://github.com/dongeul2/index-blog/issues/62)) ([7c42e44](https://github.com/dongeul2/index-blog/commit/7c42e445ec7f0346fbb9f34512ce071e135ed40a)), closes [#13](https://github.com/dongeul2/index-blog/issues/13)
+
 ## [0.2.1](https://github.com/dongeul2/index-blog/compare/index-blog-v0.2.0...index-blog-v0.2.1) (2026-10-13)
 
 
