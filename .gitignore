@@ -48,3 +48,6 @@ next-env.d.ts
 /test-results/
 /playwright-report/
 /blob-report/
+
+# 로컬 데이터 백업 (공개 저장소에 올리지 않음)
+/backups/

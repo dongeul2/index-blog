@@ -45,29 +45,35 @@ if (rows) {
   console.log(`        (익명에게 보이는 글: ${rows.length}건)`);
 }
 
-// 2. 본문도 읽힌다 (글 상세에 필요)
-const { data: one, error: bodyError } = await db
-  .from("posts")
-  .select("slug, body")
-  .eq("slug", "toc-observer")
-  .single();
-check("본문 읽기 가능", !bodyError && Boolean(one?.body), bodyError?.message ?? "");
+// 2. 본문도 읽힌다 (글 상세에 필요) — 특정 글에 기대지 않고, 보이는 글 중 하나로 확인합니다.
+//    공개된 글이 없으면 "통과"가 아니라 "건너뜀"입니다 — 대상 없이 통과하는 검사는 거짓 안심입니다.
+const visible = rows?.[0]?.slug;
+const skip = (label) => console.log(` SKIP  ${label} — 익명에게 보이는 글이 없음`);
 
-// 3. 쓰기는 막힌다
+if (visible) {
+  const { data: one, error: bodyError } = await db
+    .from("posts")
+    .select("slug, body")
+    .eq("slug", visible)
+    .single();
+  check("본문 읽기 가능", !bodyError && Boolean(one?.body), bodyError?.message ?? "");
+} else {
+  skip("본문 읽기 가능");
+}
+
+// 3. 쓰기는 막힌다 — 보이는 글(있으면)과 항상 있는 검증 행 둘 다에 시도합니다
 const { error: insertError } = await db
   .from("posts")
   .insert({ slug: "anon-should-fail", title: "x", category: "essay" });
 check("익명 INSERT 차단", Boolean(insertError), insertError ? "" : "삽입이 성공해 버렸습니다");
 
-const { data: updated } = await db
-  .from("posts")
-  .update({ title: "해킹됨" })
-  .eq("slug", "toc-observer")
-  .select();
-check("익명 UPDATE 차단", !updated || updated.length === 0);
+for (const slug of [visible, "rls-check-draft"].filter(Boolean)) {
+  const { data: updated } = await db.from("posts").update({ title: "해킹됨" }).eq("slug", slug).select();
+  check(`익명 UPDATE 차단 (${slug})`, !updated || updated.length === 0);
 
-const { data: deleted } = await db.from("posts").delete().eq("slug", "toc-observer").select();
-check("익명 DELETE 차단", !deleted || deleted.length === 0);
+  const { data: deleted } = await db.from("posts").delete().eq("slug", slug).select();
+  check(`익명 DELETE 차단 (${slug})`, !deleted || deleted.length === 0);
+}
 
 // 4. 허용 목록 테이블은 아예 닫혀 있다
 const { data: admins } = await db.from("admins").select("github_login");
