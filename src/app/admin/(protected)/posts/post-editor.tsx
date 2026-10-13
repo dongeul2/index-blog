@@ -4,6 +4,8 @@ import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "reac
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Markdown } from "@/components/markdown";
+import { RichEditor } from "@/components/rich/rich-editor";
+import { richReadingMinutes, richText, type RichDoc } from "@/lib/rich";
 import { parseMarkdown, prepare, readingMinutes } from "@/lib/markdown";
 import { CATEGORIES, CATEGORY_LABEL, type Category, type Source } from "@/lib/content-types";
 import { STATUS_LABEL, type PostStatus } from "@/lib/post-status";
@@ -54,6 +56,8 @@ export type EditorPost = {
   summary: string;
   tags: string;
   body: string;
+  /** 에디터 문서. null이면 예전 마크다운 글(body) */
+  doc: RichDoc | null;
   publishedAt: string | null;
 };
 
@@ -97,6 +101,8 @@ const useNow = () =>
 export function PostEditor({ post }: { post: EditorPost }) {
   const router = useRouter();
   const [draft, setDraft] = useState(post);
+  // 마크다운으로 쓰인 예전 글만 마크다운 화면으로 엽니다. 새 글과 에디터 글은 블로그형 에디터.
+  const [richMode] = useState(() => post.doc !== null || post.body.trim() === "");
   const [confirmed, setConfirmed] = useState(false);
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -119,7 +125,7 @@ export function PostEditor({ post }: { post: EditorPost }) {
   const set = <K extends keyof EditorPost>(key: K, value: EditorPost[K]) => {
     setDraft((d) => ({ ...d, [key]: value }));
     // 본문이나 제목이 바뀌면 "미리보기를 확인했다"는 사실이 더는 유효하지 않습니다.
-    if (key === "body" || key === "title") setConfirmed(false);
+    if (key === "body" || key === "doc" || key === "title") setConfirmed(false);
   };
 
   const now = useNow();
@@ -132,7 +138,12 @@ export function PostEditor({ post }: { post: EditorPost }) {
     prepare(t);
     return t;
   }, [draft.body]);
-  const minutes = useMemo(() => readingMinutes(tree), [tree]);
+  const minutes = useMemo(
+    () => (richMode ? richReadingMinutes(draft.doc) : readingMinutes(tree)),
+    [richMode, draft.doc, tree],
+  );
+  // 에디터는 쓰는 화면이 곧 결과 화면이라 「미리보기 확인」 단계가 필요 없습니다
+  const reviewed = richMode || confirmed;
 
   const input = (): PostInput => ({ ...draft, publishedAt });
 
@@ -191,7 +202,7 @@ export function PostEditor({ post }: { post: EditorPost }) {
     const result = await assist(task, {
       title: draft.title,
       summary: draft.summary,
-      body: draft.body,
+      body: richMode ? richText(draft.doc) : draft.body,
     });
     setAiBusy(null);
 
@@ -306,10 +317,10 @@ export function PostEditor({ post }: { post: EditorPost }) {
             id="post-slug"
             value={draft.slug}
             onChange={(e) => set("slug", e.target.value)}
-            placeholder="toc-observer"
+            placeholder="비워 두면 제목으로 자동"
             className="font-mono text-[0.8125rem]"
           />
-          <FieldDescription>영소문자·숫자·하이픈만</FieldDescription>
+          <FieldDescription>비워 두면 저장할 때 제목으로 만듭니다. 직접 쓸 땐 영소문자·숫자·하이픈만</FieldDescription>
         </Field>
 
         <Field>
@@ -469,7 +480,16 @@ export function PostEditor({ post }: { post: EditorPost }) {
         </Field>
       </FieldGroup>
 
-      {/* ---------- 50:50 분할 ---------- */}
+      {/* ---------- 본문 ---------- */}
+      {richMode ? (
+        <div className="mt-8">
+          <p className="split__label">
+            본문
+            <span className="split__count">읽는 시간 {minutes}분</span>
+          </p>
+          <RichEditor value={draft.doc} onChange={(doc) => set("doc", doc)} />
+        </div>
+      ) : (
       <div className="split">
         <div className="split__pane">
           <p className="split__label">마크다운</p>
@@ -498,9 +518,11 @@ export function PostEditor({ post }: { post: EditorPost }) {
           </div>
         </div>
       </div>
+      )}
 
       {/* ---------- 액션 ---------- */}
       <div className="editor__actions">
+        {!richMode && (
         <FieldRow>
           <Checkbox
             id="preview-confirmed"
@@ -511,6 +533,7 @@ export function PostEditor({ post }: { post: EditorPost }) {
             미리보기를 확인했습니다
           </FieldLabel>
         </FieldRow>
+        )}
 
         <div className="flex flex-wrap gap-2">
           {draft.originalSlug && (
@@ -536,7 +559,7 @@ export function PostEditor({ post }: { post: EditorPost }) {
           <Button
             type="button"
             onClick={() => void save({ status: "published" })}
-            disabled={busy || !confirmed || !publishedAt}
+            disabled={busy || !reviewed || !publishedAt}
             aria-describedby="publish-hint"
           >
             {scheduled ? "예약 발행" : "발행"}
@@ -546,7 +569,7 @@ export function PostEditor({ post }: { post: EditorPost }) {
         <p className="editor__hint" id="publish-hint">
           {!publishedAt
             ? "발행하려면 발행 시각을 정하세요."
-            : !confirmed
+            : !reviewed
               ? "미리보기를 확인해야 발행할 수 있습니다."
               : scheduled
                 ? "정한 시각이 되면 공개됩니다."

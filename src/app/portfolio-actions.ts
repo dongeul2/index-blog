@@ -13,6 +13,7 @@ import type {
   ProjectKind,
   SkillCategory,
 } from "@/lib/project-types";
+import { isRichDoc, type RichDoc } from "@/lib/rich";
 
 /**
  * 홈에서 바로 편집 — 서버 액션.
@@ -180,6 +181,8 @@ export type ProjectInput = {
   repo: string;
   repoPublic: boolean;
   skills: string[];
+  /** 상세 페이지 본문 */
+  story: RichDoc | null;
 };
 
 export async function saveProject(input: ProjectInput): Promise<ActionResult<{ slug: string }>> {
@@ -225,6 +228,7 @@ export async function saveProject(input: ProjectInput): Promise<ActionResult<{ s
     site_url: site || null,
     repo: repo || null,
     repo_public: repo ? input.repoPublic : false,
+    story: isRichDoc(input.story) ? input.story : null,
   };
 
   const { error } = input.slug

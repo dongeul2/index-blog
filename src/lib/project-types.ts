@@ -1,3 +1,5 @@
+import type { RichDoc } from "./rich";
+
 /**
  * 프로젝트·채널 타입.
  *
@@ -88,6 +90,8 @@ export type Project = {
   accent: string | null;
   imageAlt: string | null;
   gallery: GalleryImage[];
+  /** 상세 페이지 본문(에디터 문서) */
+  story: RichDoc | null;
 };
 
 export type GalleryImage = { src: string; alt: string; caption?: string };

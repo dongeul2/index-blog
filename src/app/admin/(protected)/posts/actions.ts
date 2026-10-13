@@ -5,6 +5,8 @@ import { getViewer } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import type { Category, Source } from "@/lib/content-types";
 import type { PostStatus } from "@/lib/post-status";
+import { isRichDoc, richText, type RichDoc } from "@/lib/rich";
+import { toSlug, uniqueSlug } from "@/lib/slug";
 
 export type PostInput = {
   /** 편집 중인 글의 원래 slug. 새 글이면 null */
@@ -20,7 +22,10 @@ export type PostInput = {
   summary: string;
   /** 쉼표로 구분한 입력을 그대로 받아 서버에서 정리합니다 */
   tags: string;
+  /** 마크다운 본문(예전 글·자동 생성 글). doc이 있으면 서버가 doc의 평문으로 덮어씁니다 */
   body: string;
+  /** 에디터 문서. 있으면 본문의 정본 */
+  doc: RichDoc | null;
   /** ISO 문자열. 초안·큐는 없을 수 있습니다 */
   publishedAt: string | null;
 };
@@ -50,7 +55,9 @@ function clean(input: PostInput) {
           .filter(Boolean),
       ),
     ],
-    body: input.body,
+    // 에디터로 쓴 글은 body에 평문을 둡니다 — 검색·읽는 시간·AI 요약이 그대로 동작합니다
+    doc: isRichDoc(input.doc) ? input.doc : null,
+    body: isRichDoc(input.doc) ? richText(input.doc) : input.body,
     published_at: input.publishedAt,
   };
 }
@@ -69,6 +76,14 @@ export async function savePost(input: PostInput): Promise<SaveResult> {
   const row = clean(input);
 
   if (!row.title) return { ok: false, error: "제목을 입력하세요." };
+
+  const supabase = await createClient();
+
+  // 주소를 비워 두면 제목으로 만듭니다(한글 제목이면 post-xxxxx)
+  if (!row.slug) {
+    const { data: taken } = await supabase.from("posts").select("slug");
+    row.slug = uniqueSlug(toSlug(row.title, "post"), new Set((taken ?? []).map((r: { slug: string }) => r.slug)));
+  }
   if (!SLUG.test(row.slug)) {
     return {
       ok: false,
@@ -78,8 +93,6 @@ export async function savePost(input: PostInput): Promise<SaveResult> {
   if (row.status === "published" && !row.published_at) {
     return { ok: false, error: "발행하려면 발행 시각이 필요합니다." };
   }
-
-  const supabase = await createClient();
 
   const query = input.originalSlug
     ? supabase.from("posts").update(row).eq("slug", input.originalSlug).select("slug").single()

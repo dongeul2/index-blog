@@ -20,6 +20,7 @@ const EMPTY: EditorPost = {
   summary: "",
   tags: "",
   body: "",
+  doc: null,
   publishedAt: null,
 };
 

@@ -12,6 +12,7 @@ import { deleteProject, saveProject, type ProjectInput } from "@/app/portfolio-a
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RichEditor } from "@/components/rich/rich-editor";
 import { EditButton, EditPanel, ImageField, RowsField, useSave } from "./edit-kit";
 import { useEditMode } from "./edit-mode";
 
@@ -41,6 +42,7 @@ const toForm = (p: Project | undefined, skills: Skill[]): ProjectInput => ({
   repo: p?.repo ?? "",
   repoPublic: p?.repoPublic ?? true,
   skills: skills.map((s) => s.slug),
+  story: p?.story ?? null,
 });
 
 /**
@@ -278,6 +280,15 @@ export function ProjectEditor({
                 </div>
               );
             })}
+          </div>
+        </Group>
+
+        <Group title="상세 소개 (프로젝트 페이지 본문)">
+          <div className="edit-field edit-field--wide">
+            <span className="edit-hint">
+              「자세히 보기」를 누르면 나오는 페이지의 본문입니다. 블로그 글처럼 제목·이미지·표·첨부 파일을 넣을 수 있습니다.
+            </span>
+            <RichEditor value={form.story} onChange={(story) => set("story", story)} minHeight="16rem" />
           </div>
         </Group>
 

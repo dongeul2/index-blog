@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Markdown } from "@/components/markdown";
+import { RichContent } from "@/components/rich/rich-content";
 import { Section } from "@/components/section";
 import { CATEGORY_LABEL, formatDate, postsOfProject } from "@/lib/posts";
 import { parseMarkdown, prepare } from "@/lib/markdown";
@@ -59,7 +60,7 @@ export default async function ProjectPage({ params }: { params: Promise<Params> 
     <div className="page project">
       <header className="project-head">
         <p className="project-head__back">
-          <Link href="/projects">← 프로젝트 목록</Link>
+          <Link href="/#projects">← 포트폴리오로</Link>
         </p>
 
         {/* 관리자가 URL을 적어 넣은 프로젝트만 — 없으면 지금과 같이 이미지 없이 보입니다.
@@ -152,6 +153,12 @@ export default async function ProjectPage({ params }: { params: Promise<Params> 
           </Alert>
         )}
       </header>
+
+      {project.story && (
+        <Section title="소개">
+          <RichContent doc={project.story} />
+        </Section>
+      )}
 
       <Section title="README">
         {readmeTree ? (

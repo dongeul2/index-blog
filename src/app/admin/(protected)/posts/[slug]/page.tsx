@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PostEditor, type EditorPost } from "../post-editor";
+import { isRichDoc } from "@/lib/rich";
 import { createClient } from "@/lib/supabase/server";
 import { isCategory, type Category, type Source } from "@/lib/content-types";
 import type { PostStatus } from "@/lib/post-status";
@@ -18,7 +19,7 @@ export default async function EditPostPage({ params }: { params: Promise<{ slug:
   const { data } = await supabase
     .from("posts")
     .select(
-      "slug, title, category, status, source, source_ref, project, channel, summary, tags, body, published_at",
+      "slug, title, category, status, source, source_ref, project, channel, summary, tags, body, doc, published_at",
     )
     .eq("slug", slug)
     .maybeSingle();
@@ -38,6 +39,7 @@ export default async function EditPostPage({ params }: { params: Promise<{ slug:
     summary: data.summary ?? "",
     tags: (data.tags ?? []).join(", "),
     body: data.body ?? "",
+    doc: isRichDoc(data.doc) ? data.doc : null,
     publishedAt: data.published_at,
   };
 

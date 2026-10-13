@@ -19,6 +19,7 @@ import type {
   SkillCategory,
 } from "./project-types";
 import { EMPTY_PROFILE } from "./project-types";
+import { isRichDoc } from "./rich";
 
 export * from "./project-types";
 
@@ -31,7 +32,7 @@ export * from "./project-types";
 
 // 한 줄짜리 리터럴이어야 supabase-js가 select 문자열에서 행 타입을 추론합니다
 const PROJECT_COLUMNS =
-  "slug, name, description, repo, status, link_state, branch, language, repo_public, last_activity, synced_at, image_url, site_url, kind, experience_id, role, period_start, period_end, team_size, metrics, decisions, confidential, featured, sort_order, overview, accent, image_alt, gallery";
+  "slug, name, description, repo, status, link_state, branch, language, repo_public, last_activity, synced_at, image_url, site_url, kind, experience_id, role, period_start, period_end, team_size, metrics, decisions, confidential, featured, sort_order, overview, accent, image_alt, gallery, story";
 
 type ProjectRow = {
   slug: string;
@@ -62,6 +63,7 @@ type ProjectRow = {
   accent: string | null;
   image_alt: string | null;
   gallery: GalleryImage[];
+  story: unknown;
 };
 
 const toProject = (row: ProjectRow): Project => ({
@@ -94,6 +96,7 @@ const toProject = (row: ProjectRow): Project => ({
   accent: row.accent,
   imageAlt: row.image_alt,
   gallery: row.confidential ? [] : (row.gallery ?? []),
+  story: isRichDoc(row.story) ? row.story : null,
 });
 
 /** 최근 활동순. 활동 기록이 없는 프로젝트는 뒤로 보냅니다. */
