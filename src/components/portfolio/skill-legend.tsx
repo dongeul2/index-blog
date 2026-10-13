@@ -5,6 +5,7 @@ import {
   SKILL_CATEGORY_LABEL,
   type Skill,
 } from "@/lib/project-types";
+import { CATEGORY_ROLE } from "@/lib/roles";
 import { useSkillFilter } from "./skill-filter";
 
 /**
@@ -25,7 +26,10 @@ export function SkillLegend({ skills, usage }: { skills: Skill[]; usage: Record<
         if (items.length === 0) return null;
         return (
           <div key={category} className="legend__row">
-            <h3 className="legend__label">{SKILL_CATEGORY_LABEL[category]}</h3>
+            <h3 className="legend__label">
+              <span className="role-dot" data-role={CATEGORY_ROLE[category]} aria-hidden="true" />
+              {SKILL_CATEGORY_LABEL[category]}
+            </h3>
             <ul className="legend__items">
               {items.map((s) => (
                 <li key={s.slug}>

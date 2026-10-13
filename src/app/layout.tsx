@@ -26,14 +26,13 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: dark)", color: "#16191E" },
-    { media: "(prefers-color-scheme: light)", color: "#FCFCFB" },
-  ],
+  // 기본 테마(밝음)의 바탕색. 다크는 사용자가 직접 고를 때만이라 기기 설정을 따르지 않습니다
+  themeColor: "#FDFDFE",
 };
 
 /** 플래시 방지 — 페인트 전에 data-theme을 심습니다(디자인 시스템 지정 스니펫). */
-const THEME_SCRIPT = `const t = localStorage.theme ?? (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+// v0.4부터 밝은 테마가 기본입니다. 직접 다크를 고른 사람(localStorage)만 다크로 엽니다.
+const THEME_SCRIPT = `const t = localStorage.theme ?? 'light';
 if (t === 'light') document.documentElement.dataset.theme = 'light';`;
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

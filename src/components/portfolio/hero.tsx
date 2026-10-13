@@ -1,16 +1,18 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { ROLES, ROLE_LABEL } from "@/lib/roles";
 
 /**
- * 첫 화면 — 제도 용지.
+ * 첫 화면 — 네 자루 펜의 플로터.
  *
- * 이름은 플로터가 펜으로 긋듯 윤곽선이 먼저 그려지고 나서 채워집니다(CSS, `.hero__name`).
- * 포인터를 따라 CAD 커서처럼 십자선과 좌표가 움직입니다. 좌표는 용지 왼쪽 위를 원점으로 한
- * 밀리미터 단위인 척하는 값입니다 — 1px = 0.25mm.
+ * 이름을 기획·개발·QA·운영 네 색의 펜이 차례로 긋고(조금씩 어긋난 다색 인쇄처럼), 마지막에
+ * 먹으로 채웁니다. 포인터를 올리면 네 장의 도면이 3D로 벌어져 역할별 층으로 나뉘고, 포인터를
+ * 따라 기웁니다 — 한 사람이 네 역할을 겹쳐 하고 있다는 것을 그림으로.
  *
- * 움직임 줄이기를 켰거나 포인터가 거친(터치) 기기에서는 십자선을 띄우지 않습니다.
- * 상태를 React에 두지 않고 DOM 스타일을 직접 바꿉니다 — 포인터마다 리렌더할 이유가 없습니다.
+ * 3D는 CSS(preserve-3d)입니다. 레이어 다섯 장을 기울이는 데 WebGL은 과하고, 글자가 벡터로
+ * 남아야 선명합니다. 기울기·벌어짐은 CSS 변수만 바꿔 리렌더 없이 움직입니다.
+ * CAD 커서(십자선·좌표)는 그대로 둡니다. 움직임 줄이기·터치 기기에서는 펼쳐지지 않습니다.
  */
 export function Hero({
   name,
@@ -26,12 +28,14 @@ export function Hero({
   const sheetRef = useRef<HTMLDivElement>(null);
   const cursorRef = useRef<HTMLDivElement>(null);
   const readoutRef = useRef<HTMLSpanElement>(null);
+  const stackRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const sheet = sheetRef.current;
     const cursor = cursorRef.current;
     const readout = readoutRef.current;
-    if (!sheet || !cursor || !readout) return;
+    const stack = stackRef.current;
+    if (!sheet || !cursor || !readout || !stack) return;
 
     const fine = matchMedia("(pointer: fine)").matches;
     const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -45,6 +49,13 @@ export function Hero({
       cursor.style.setProperty("--x", `${x}px`);
       cursor.style.setProperty("--y", `${y}px`);
       readout.textContent = `X ${(x / 4).toFixed(1).padStart(6, "0")}  Y ${(y / 4).toFixed(1).padStart(6, "0")}`;
+      // 이름 묶음의 가운데를 기준으로 기울입니다(-1 ~ 1)
+      const r = stack.getBoundingClientRect();
+      const s = sheet.getBoundingClientRect();
+      const px = (x + s.left - (r.left + r.width / 2)) / (s.width / 2);
+      const py = (y + s.top - (r.top + r.height / 2)) / (s.height / 2);
+      stack.style.setProperty("--ry", `${(px * 22).toFixed(2)}deg`);
+      stack.style.setProperty("--rx", `${(-py * 16 + 18).toFixed(2)}deg`);
     };
     const onMove = (e: PointerEvent) => {
       const r = sheet.getBoundingClientRect();
@@ -66,6 +77,12 @@ export function Hero({
     };
   }, []);
 
+  const text = (
+    <text x="2" y="135">
+      {nameLatin}
+    </text>
+  );
+
   return (
     <div ref={sheetRef} className="hero" data-cursor="off">
       <div className="hero__grid" aria-hidden="true" />
@@ -74,12 +91,20 @@ export function Hero({
         {role && <p className="hero__role">{role}</p>}
         <h1 className="hero__title">
           <span className="sr-only">{name || nameLatin}</span>
-          {/* 윤곽선 → 채움. 글자 수에 따라 폭이 달라지므로 viewBox는 넉넉히, 텍스트는 왼쪽 정렬 */}
-          <svg className="hero__name" viewBox="0 0 1000 170" aria-hidden="true" focusable="false">
-            <text x="2" y="135">
-              {nameLatin}
-            </text>
-          </svg>
+          <div ref={stackRef} className="hero__stack" aria-hidden="true">
+            {ROLES.map((r, i) => (
+              <div key={r} className="hero__layer" data-role={r} style={{ "--i": i } as React.CSSProperties}>
+                <svg className="hero__pen" viewBox="0 0 1000 170" focusable="false">
+                  {text}
+                </svg>
+                <span className="hero__tag">{ROLE_LABEL[r]}</span>
+              </div>
+            ))}
+            {/* 먹 — 펜 네 자루가 다 그은 뒤 채워지는 맨 윗장. 이 장이 묶음의 크기를 정합니다 */}
+            <svg className="hero__ink" viewBox="0 0 1000 170" focusable="false">
+              {text}
+            </svg>
+          </div>
         </h1>
         {intro && <p className="hero__intro">{intro}</p>}
         <a className="hero__next" href="#about">
