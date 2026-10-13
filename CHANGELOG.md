@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.1](https://github.com/dongeul2/index-blog/compare/index-blog-v0.2.0...index-blog-v0.2.1) (2026-10-13)
+
+
+### 버그 수정
+
+* **cache:** 공개 DB 조회에 명시적인 캐시 정책 ([#49](https://github.com/dongeul2/index-blog/issues/49)) ([fec4e26](https://github.com/dongeul2/index-blog/commit/fec4e26ee6f268739072b3a791fc5b5892072184))
+* **deps:** Next.js 16.3.8로 보안 패치 ([#56](https://github.com/dongeul2/index-blog/issues/56)) ([763d6fe](https://github.com/dongeul2/index-blog/commit/763d6fe141da3f5627f78651fadf5ede82de9c22))
+
 ## [0.2.0](https://github.com/dongeul2/index-blog/compare/index-blog-v0.1.0...index-blog-v0.2.0) (2026-10-12)
 
 
