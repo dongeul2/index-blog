@@ -10,7 +10,6 @@ npm run lint && npm run typecheck
 npm test               # Vitest 단위 테스트
 npm run test:e2e       # Playwright E2E (데스크톱·모바일 + axe 접근성)
 
-node --env-file=.env.local scripts/seed-posts.mjs   # content/posts/*.md → DB (slug 기준 upsert)
 node --env-file=.env.local scripts/check-rls.mjs    # 공개 키로 RLS가 실제로 막는지 확인
 ```
 
@@ -98,8 +97,8 @@ private.is_admin()  현재 사용자가 허용 목록에 있는지
 - **읽는 시간과 소제목은 본문에서 계산합니다.** 컬럼으로 두면 본문과 어긋납니다.
 - `status`는 `draft / published / queued / failed` — 10 대시보드의 네 상태와 같습니다.
 
-`content/posts/*.md`는 이제 **앱이 읽지 않습니다.** 시드 원본이자 백업이고, 런타임 저장소는
-DB입니다.
+글의 유일한 저장소는 DB입니다. 2026-10-12 포트폴리오 재편(#8) 때 초기 글과 마크다운 시드
+(`content/posts/`, `scripts/seed-posts.mjs`)를 모두 걷어냈고, 지운 행은 git 밖 로컬 백업으로만 남겼습니다.
 
 ### 본문 문법
 
@@ -184,8 +183,7 @@ src/
     ai/                          Gemini 어댑터 · 프롬프트 · 사용량 · 쿼터
     time.ts  highlight.ts
 public/fonts/          셀프 호스팅 폰트 (Pretendard OFL · JetBrains Mono OFL)
-content/posts/         게시물 마크다운 (시드 원본 — 런타임에는 읽지 않음)
-scripts/               seed-posts.mjs · check-rls.mjs · check-github.mjs
+scripts/               check-rls.mjs · check-github.mjs · github-bootstrap.mjs
 supabase/migrations/   스키마 · RLS 정책
 docs/                  디자인 핸드오프 원본 (DESIGN_SYSTEM.md, HANDOFF.md)
 ```
