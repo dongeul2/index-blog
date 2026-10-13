@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Markdown } from "@/components/markdown";
+import { RichContent } from "@/components/rich/rich-content";
 import { Toc } from "@/components/toc";
 import { PostNav } from "@/components/post-nav";
 import { SetReadingTitle } from "@/components/reading-title";
@@ -11,7 +12,7 @@ import {
   formatDate,
   getAdjacent,
   getPost,
-  getPostTree,
+  getPostBody,
   getPosts,
 } from "@/lib/posts";
 import { Badge } from "@/components/ui/badge";
@@ -36,8 +37,8 @@ export async function generateMetadata({
 export default async function PostPage({ params }: { params: Promise<Params> }) {
   const { slug } = await params;
   const post = await getPost(slug);
-  const tree = await getPostTree(slug);
-  if (!post || !tree) notFound();
+  const body = await getPostBody(slug);
+  if (!post || !body) notFound();
 
   const { prev, next } = await getAdjacent(post.slug);
   const project = post.project ? await getProject(post.project) : undefined;
@@ -109,7 +110,7 @@ export default async function PostPage({ params }: { params: Promise<Params> }) 
 
         {post.headings.length > 0 && <Toc headings={post.headings} />}
 
-        <Markdown tree={tree} />
+        {body.kind === "rich" ? <RichContent doc={body.doc} /> : <Markdown tree={body.tree} />}
 
         <PostNav prev={prev} next={next} />
       </article>

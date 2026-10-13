@@ -27,10 +27,19 @@ export type ProjectInput = {
   siteUrl: string;
 };
 
-/** 빈 문자열은 null로, 값이 있으면 http(s) URL인지만 확인합니다(업로드 없이 참조만). */
-function normalizeUrlField(value: string): { ok: true; value: string | null } | { ok: false } {
+/**
+ * 빈 문자열은 null로, 값이 있으면 http(s) URL인지만 확인합니다(업로드 없이 참조만).
+ * 이미지는 저장소 public/projects/ 아래 경로도 받습니다 — PR로 올린 이미지를 next/image로 최적화합니다.
+ */
+function normalizeUrlField(
+  value: string,
+  allowLocal = false,
+): { ok: true; value: string | null } | { ok: false } {
   const trimmed = value.trim();
   if (!trimmed) return { ok: true, value: null };
+  if (allowLocal && /^\/projects\/[\w./-]+$/.test(trimmed) && !trimmed.includes("..")) {
+    return { ok: true, value: trimmed };
+  }
   return /^https?:\/\/.+/i.test(trimmed) ? { ok: true, value: trimmed } : { ok: false };
 }
 
@@ -75,8 +84,10 @@ export async function saveProject(input: ProjectInput): Promise<ProjectResult> {
     return { ok: false, error: "저장소는 owner/repo 형식이어야 합니다. 예: dongeul2/index-blog" };
   }
 
-  const image = normalizeUrlField(input.imageUrl);
-  if (!image.ok) return { ok: false, error: "커버 이미지는 http(s):// 로 시작하는 URL이어야 합니다." };
+  const image = normalizeUrlField(input.imageUrl, true);
+  if (!image.ok) {
+    return { ok: false, error: "커버 이미지는 http(s):// URL이거나 /projects/ 로 시작하는 경로여야 합니다." };
+  }
   const site = normalizeUrlField(input.siteUrl);
   if (!site.ok) return { ok: false, error: "사이트 링크는 http(s):// 로 시작하는 URL이어야 합니다." };
 

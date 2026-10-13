@@ -12,6 +12,7 @@ import {
   type Source,
 } from "./content-types";
 import { parseMarkdown, prepare, readingMinutes } from "./markdown";
+import { isRichDoc, richHeadings, richReadingMinutes, type RichDoc } from "./rich";
 import { supabasePublic } from "./supabase/public";
 
 export * from "./content-types";
@@ -29,7 +30,7 @@ export * from "./content-types";
  */
 
 const COLUMNS =
-  "slug, title, category, summary, tags, source, source_ref, project, channel, is_generated, published_at, body";
+  "slug, title, category, summary, tags, source, source_ref, project, channel, is_generated, published_at, body, doc";
 
 type Row = {
   slug: string;
@@ -44,6 +45,8 @@ type Row = {
   is_generated: boolean;
   published_at: string;
   body: string | null;
+  /** 에디터로 쓴 글이면 본문의 정본. 없으면 body가 마크다운 */
+  doc: unknown;
 };
 
 /**
@@ -68,18 +71,22 @@ function seoulDate(iso: string): string {
  * 이것입니다 — 목록과 상세가 다른 방식으로 세면 같은 글에 다른 숫자가 붙습니다.
  * 글이 많아지면 저장 시점에 계산해 컬럼으로 두는 쪽으로 옮겨야 합니다.
  */
-function toPost(row: Row): { meta: PostMeta; tree: Root } {
-  const tree = parseMarkdown(row.body ?? "");
-  const headings = prepare(tree);
+/** 글 상세가 그릴 본문 — 에디터 문서이거나 마크다운 트리 */
+export type PostBody = { kind: "rich"; doc: RichDoc } | { kind: "markdown"; tree: Root };
+
+function toPost(row: Row): { meta: PostMeta; body: PostBody } {
+  const doc = isRichDoc(row.doc) ? row.doc : null;
+  const tree = parseMarkdown(doc ? "" : (row.body ?? ""));
+  const headings = doc ? richHeadings(doc) : prepare(tree);
 
   return {
-    tree,
+    body: doc ? { kind: "rich", doc } : { kind: "markdown", tree },
     meta: {
       slug: row.slug,
       title: row.title,
       category: isCategory(row.category) ? row.category : "essay",
       date: seoulDate(row.published_at),
-      readingMinutes: readingMinutes(tree),
+      readingMinutes: doc ? richReadingMinutes(doc) : readingMinutes(tree),
       summary: row.summary ?? "",
       tags: row.tags ?? [],
       source: row.source as Source,
@@ -93,7 +100,7 @@ function toPost(row: Row): { meta: PostMeta; tree: Root } {
 }
 
 /** 요청 한 번에 한 번만 받아 옵니다. */
-const loadAll = cache(async (): Promise<{ meta: PostMeta; tree: Root }[]> => {
+const loadAll = cache(async (): Promise<{ meta: PostMeta; body: PostBody }[]> => {
   const { data, error } = await supabasePublic
     .from("posts")
     .select(COLUMNS)
@@ -112,9 +119,9 @@ export async function getPost(slug: string): Promise<PostMeta | undefined> {
   return (await loadAll()).find((p) => p.meta.slug === slug)?.meta;
 }
 
-/** 본문 트리 — 글 상세에서만 씁니다. */
-export async function getPostTree(slug: string): Promise<Root | undefined> {
-  return (await loadAll()).find((p) => p.meta.slug === slug)?.tree;
+/** 본문 — 글 상세에서만 씁니다. */
+export async function getPostBody(slug: string): Promise<PostBody | undefined> {
+  return (await loadAll()).find((p) => p.meta.slug === slug)?.body;
 }
 
 /** 아카이브(최신순) 기준 이전 글 / 다음 글 */

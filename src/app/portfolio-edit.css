@@ -1,0 +1,186 @@
+/* ============================================================
+   홈에서 바로 편집 — 관리자에게만 보이는 도구
+   공개 화면과 같은 도면 언어(괘선·각진 모서리)를 쓰고, 편집 요소는 점선·액센트로 구분합니다.
+   ============================================================ */
+@layer components {
+  .folio-section__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 0.75rem 1.5rem;
+    padding-bottom: 1rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--color-border-strong);
+  }
+  .folio-section__head .folio-section__title {
+    padding-bottom: 0;
+    margin-bottom: 0;
+    border-bottom: 0;
+  }
+  .folio-section__head > .edit-panel { flex-basis: 100%; }
+
+  /* ---------- 화면 아래 편집 도구 ---------- */
+  .edit-dock {
+    position: fixed;
+    right: 1rem;
+    bottom: calc(1rem + var(--spacing-safe-bottom));
+    z-index: var(--z-sheet);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.5rem 1rem 0.5rem 0.5rem;
+    border: 1px solid var(--color-accent);
+    background: var(--color-bg-subtle);
+    font-size: 0.875rem;
+  }
+  .edit-dock__toggle {
+    height: 2.5rem;
+    padding-inline: 1rem;
+    border: 1px solid var(--color-accent);
+    background: var(--color-accent);
+    color: var(--color-accent-on);
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .edit-dock__toggle[aria-pressed="true"] { background: transparent; color: var(--color-accent); }
+  .edit-dock__link { color: var(--color-text-2); }
+
+  /* ---------- 수정 버튼 ---------- */
+  .edit-btn {
+    display: inline-flex;
+    align-items: center;
+    height: 2.25rem;
+    padding-inline: 0.875rem;
+    border: 1px dashed var(--color-accent);
+    background: var(--color-accent-bg);
+    color: var(--color-text);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .edit-btn:hover { border-style: solid; }
+  .showcase__body > .edit-btn,
+  .mini > .edit-btn,
+  .career__body > .edit-btn {
+    margin-top: 1rem;
+    align-self: flex-start;
+  }
+  #projects > .edit-btn,
+  #projects > .edit-panel { margin-bottom: 2rem; }
+  /* 비어 있으면(편집 모드가 아니면) 쇼케이스 격자에 빈 줄을 만들지 않습니다 */
+  .showcase__edit { grid-column: 1 / -1; }
+  .showcase__edit:empty { display: none; }
+
+  /* ---------- 편집 패널 ---------- */
+  .edit-panel {
+    display: grid;
+    gap: 1.25rem;
+    margin-block: 1rem 2rem;
+    padding: 1.5rem;
+    border: 1px solid var(--color-accent);
+    background: var(--color-bg-subtle);
+    color: var(--color-text);
+    text-align: left;
+  }
+  .edit-panel__title { font-size: 1.0625rem; font-weight: 700; }
+  .edit-panel__error { font-size: 0.875rem; color: var(--color-danger); }
+  .edit-panel__actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+  .edit-grid { display: grid; gap: 1rem 1.25rem; }
+  @media (min-width: 48rem) { .edit-grid { grid-template-columns: 1fr 1fr; } }
+  .edit-field { display: flex; flex-direction: column; gap: 0.375rem; min-width: 0; }
+  .edit-field--wide,
+  .edit-group { grid-column: 1 / -1; }
+  .edit-label { font-size: 0.8125rem; font-weight: 600; color: var(--color-text-2); }
+  .edit-hint { font-size: 0.75rem; color: var(--color-text-muted); }
+  .edit-select {
+    height: 2.75rem;
+    padding-inline: 0.75rem;
+    border: 1px solid var(--color-border-strong);
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-size: 0.9375rem;
+  }
+  .edit-check { display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--color-text-2); }
+  .edit-radios { display: flex; flex-wrap: wrap; gap: 1rem; font-size: 0.9375rem; }
+  .edit-radios label { display: inline-flex; align-items: center; gap: 0.375rem; }
+  .edit-radios input { accent-color: var(--color-accent); }
+
+  .edit-group { padding-top: 1rem; border-top: 1px solid var(--color-border); }
+  .edit-group > legend {
+    padding-right: 0.75rem;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: var(--color-text);
+  }
+
+  /* ---------- 칩 · 색 견본 ---------- */
+  .edit-chips,
+  .skills-editor__list ul { display: flex; flex-wrap: wrap; gap: 0.375rem; }
+  .edit-chip {
+    padding: 0.3125rem 0.75rem;
+    border: 1px solid var(--color-border-strong);
+    background: transparent;
+    color: var(--color-text);
+    font-size: 0.8125rem;
+    cursor: pointer;
+  }
+  .edit-chip[aria-pressed="true"] { background: var(--color-accent-bg); border-color: var(--color-accent); }
+  .edit-skillgroup { display: grid; gap: 0.375rem; margin-bottom: 0.75rem; }
+
+  .edit-swatches { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+  .edit-swatch {
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border: 2px solid var(--color-bg);
+    outline: 1px solid var(--color-border-strong);
+    cursor: pointer;
+  }
+  .edit-swatch[aria-pressed="true"] { outline: 2px solid var(--color-text); }
+  .edit-swatch--custom { background: none; }
+
+  /* ---------- 이미지 ---------- */
+  .image-field { display: grid; gap: 0.5rem; }
+  .image-field__drop {
+    display: grid;
+    place-items: center;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    border: 1px dashed var(--color-border-strong);
+    background: var(--color-bg);
+  }
+  .image-field__drop[data-busy] { opacity: 0.6; }
+  .image-field__drop img { width: 100%; height: 100%; object-fit: cover; }
+  .image-field__empty { padding: 1rem; font-size: 0.8125rem; color: var(--color-text-muted); text-align: center; }
+  .image-field__actions { display: flex; gap: 0.5rem; }
+
+  /* ---------- 줄 목록 ---------- */
+  .rows-field { display: grid; gap: 0.5rem; }
+  .rows-field > legend { margin-bottom: 0.375rem; }
+  .rows-field__row { display: flex; gap: 0.5rem; align-items: flex-start; }
+  .rows-field__row > :first-child { flex: 1; min-width: 0; }
+  .rows-field > button:last-child { justify-self: start; }
+  .edit-pair { display: grid; grid-template-columns: 9rem 1fr; gap: 0.5rem; }
+  .edit-gallery-row { display: grid; gap: 0.5rem; }
+  @media (min-width: 48rem) {
+    .edit-gallery-row { grid-template-columns: 14rem 1fr; align-items: start; }
+  }
+
+  /* ---------- 역량 편집 ---------- */
+  .skills-editor {
+    display: grid;
+    gap: 1.25rem;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px dashed var(--color-accent);
+  }
+  .skills-editor__add { display: grid; gap: 0.5rem; }
+  @media (min-width: 48rem) {
+    .skills-editor__add { grid-template-columns: 1fr 10rem auto; align-items: end; }
+    .skills-editor__add > .edit-label,
+    .skills-editor__add > .edit-panel__error { grid-column: 1 / -1; }
+  }
+  .skills-editor__list { display: grid; gap: 0.5rem; }
+}

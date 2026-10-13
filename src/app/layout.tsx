@@ -1,9 +1,16 @@
 import type { Metadata, Viewport } from "next";
+import { Noto_Serif_KR } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { ReadingTitleProvider } from "@/components/reading-title";
 import { buildSearchIndex } from "@/lib/build-search-index";
+
+/**
+ * 에디터의 「명조」 — 한글 명조는 기기마다 없을 수 있어 사이트가 직접 제공합니다.
+ * 미리 받지 않습니다(preload: false). 명조를 쓴 글자가 화면에 나올 때만 그 조각을 받습니다.
+ */
+const serif = Noto_Serif_KR({ weight: ["400", "700"], preload: false, display: "swap", variable: "--font-serif" });
 
 export const metadata: Metadata = {
   title: { default: "기록실 INDEX.", template: "%s — 기록실 INDEX." },
@@ -34,7 +41,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const searchIndex = await buildSearchIndex();
 
   return (
-    <html lang="ko" suppressHydrationWarning>
+    <html lang="ko" className={serif.variable} suppressHydrationWarning>
       <head>
         {/* [91]은 Pretendard 동적 서브셋 중 기본 라틴 + 최빈 한글이 든 조각입니다.
             첫 화면 글자 대부분이 여기에 있어, 이것만 미리 받아 두면 FOUT이 거의 사라집니다. */}

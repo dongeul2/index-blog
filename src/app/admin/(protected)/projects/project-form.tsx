@@ -258,12 +258,12 @@ export function ProjectForm({
 
         {/* 업로드 없이 참조만 — 이미 어딘가에 있는 이미지의 URL을 적습니다 */}
         <Field wide>
-          <FieldLabel htmlFor="project-image">커버 이미지 URL</FieldLabel>
+          <FieldLabel htmlFor="project-image">커버 이미지</FieldLabel>
           <Input
             id="project-image"
             value={form.imageUrl}
             onChange={(e) => set("imageUrl", e.target.value)}
-            placeholder="https://…"
+            placeholder="/projects/슬러그/cover.webp 또는 https://…"
             className="font-mono text-[0.8125rem]"
           />
           <FieldDescription>

@@ -118,5 +118,20 @@ const { error: linkInsert } = await db
   .insert({ project_slug: "index-blog", skill_slug: "anon-should-fail" });
 check("project_skills 익명 INSERT 차단", Boolean(linkInsert));
 
+// 7. 홈에서 바로 편집(20261013040641) — 인적 사항은 읽기만, 미디어 버킷은 올리기·목록 모두 막힘
+const { error: profileRead } = await db.from("profile").select("name").limit(1);
+check("profile 읽기 가능", !profileRead, profileRead?.message ?? "");
+
+const { data: profileUpdate } = await db.from("profile").update({ name: "해킹됨" }).eq("id", 1).select();
+check("profile 익명 UPDATE 차단", !profileUpdate || profileUpdate.length === 0);
+
+const { error: uploadError } = await db.storage
+  .from("media")
+  .upload(`images/anon-should-fail-${Date.now()}.txt`, new Blob(["x"], { type: "text/plain" }));
+check("media 익명 업로드 차단", Boolean(uploadError), uploadError ? "" : "업로드가 성공해 버렸습니다");
+
+const { data: listed } = await db.storage.from("media").list("images");
+check("media 익명 목록 조회 차단", !listed || listed.length === 0);
+
 console.log(failed === 0 ? "\n전부 통과" : `\n${failed}건 실패`);
 process.exit(failed === 0 ? 0 : 1);
