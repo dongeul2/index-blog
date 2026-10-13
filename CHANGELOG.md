@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/dongeul2/index-blog/compare/index-blog-v0.3.0...index-blog-v0.4.0) (2026-10-13)
+
+
+### 기능
+
+* **design:** 네 가지 역할 색과 역할 비율 차트 ([#64](https://github.com/dongeul2/index-blog/issues/64)) ([7951e6e](https://github.com/dongeul2/index-blog/commit/7951e6e0962632b75213fbfc8c5198c4daa053e7))
+
 ## [0.3.0](https://github.com/dongeul2/index-blog/compare/index-blog-v0.2.1...index-blog-v0.3.0) (2026-10-13)
 
 
