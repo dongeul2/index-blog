@@ -9,6 +9,7 @@
 | [0002](0002-rls-as-visibility-source.md) | 공개 범위는 앱이 아니라 RLS가 정한다 | 채택 |
 | [0003](0003-testing-and-ci.md) | 테스트 층과 CI 관문 | 채택 |
 | [0004](0004-portfolio-restructure.md) | 블로그를 포트폴리오 구조로 재편한다 | 제안 |
+| [0005](0005-public-data-cache-policy.md) | 공개 화면의 DB 조회에 명시적인 캐시 정책을 둔다 | 채택 |
 
 새 ADR은 `NNNN-kebab-title.md`로, 아래 틀을 씁니다.
 

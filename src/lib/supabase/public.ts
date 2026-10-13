@@ -18,6 +18,31 @@ if (!url || !key) {
   );
 }
 
+/** 이 태그를 `revalidateTag(PUBLIC_DATA_TAG, "max")`하면 공개 화면의 DB 조회가 모두 새로 받아집니다. */
+export const PUBLIC_DATA_TAG = "public-db";
+
+/** 관리자 화면을 거치지 않은 변경(DB 콘솔·스크립트)도 이 시간 안에는 반영됩니다. */
+const REVALIDATE_SECONDS = 3600;
+
+/**
+ * 캐시 정책 버전. fetch 캐시 키는 URL·메서드·헤더·본문으로만 정해지므로, 정책을 바꿀 때 이 값을
+ * 올려야 예전 항목이 다시 쓰이지 않습니다. v1은 정책이 없던 시절 — 유효기간 1년으로 저장된 글
+ * 목록이 Vercel 데이터 캐시에 남아, 배포를 새로 해도 지운 글이 보였습니다(ADR 0005).
+ */
+const CACHE_POLICY = "v2";
+
+const cachedFetch: typeof fetch = (input, init) => {
+  const headers = new Headers(init?.headers);
+  headers.set("x-index-cache-policy", CACHE_POLICY);
+  return fetch(input, {
+    ...init,
+    headers,
+    cache: "force-cache",
+    next: { revalidate: REVALIDATE_SECONDS, tags: [PUBLIC_DATA_TAG] },
+  });
+};
+
 export const supabasePublic = createClient(url, key, {
   auth: { persistSession: false, autoRefreshToken: false },
+  global: { fetch: cachedFetch },
 });
