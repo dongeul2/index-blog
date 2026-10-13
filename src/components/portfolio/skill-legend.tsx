@@ -46,8 +46,9 @@ export function SkillLegend({ skills, usage }: { skills: Skill[]; usage: Record<
         );
       })}
 
+      {/* 안내는 섹션 머리말이 하므로, 여기서는 지금 걸린 필터만 알립니다 */}
       <p className="legend__status" aria-live="polite">
-        {skill ? (
+        {skill && (
           <>
             <strong>{skills.find((s) => s.slug === skill)?.name}</strong>을(를) 쓴 프로젝트와 경력만
             보고 있습니다.{" "}
@@ -55,8 +56,6 @@ export function SkillLegend({ skills, usage }: { skills: Skill[]; usage: Record<
               전체 보기
             </button>
           </>
-        ) : (
-          "역량을 누르면 그 역량을 쓴 프로젝트와 경력만 남습니다."
         )}
       </p>
     </div>

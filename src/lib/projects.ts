@@ -5,6 +5,7 @@ import type {
   Commit,
   Decision,
   Experience,
+  GalleryImage,
   Metric,
   Project,
   ProjectKind,
@@ -28,7 +29,7 @@ export * from "./project-types";
 
 // 한 줄짜리 리터럴이어야 supabase-js가 select 문자열에서 행 타입을 추론합니다
 const PROJECT_COLUMNS =
-  "slug, name, description, repo, status, link_state, branch, language, repo_public, last_activity, synced_at, image_url, site_url, kind, experience_id, role, period_start, period_end, team_size, metrics, decisions, confidential, featured, sort_order";
+  "slug, name, description, repo, status, link_state, branch, language, repo_public, last_activity, synced_at, image_url, site_url, kind, experience_id, role, period_start, period_end, team_size, metrics, decisions, confidential, featured, sort_order, overview, accent, image_alt, gallery";
 
 type ProjectRow = {
   slug: string;
@@ -55,6 +56,10 @@ type ProjectRow = {
   confidential: boolean;
   featured: boolean;
   sort_order: number;
+  overview: string;
+  accent: string | null;
+  image_alt: string | null;
+  gallery: GalleryImage[];
 };
 
 const toProject = (row: ProjectRow): Project => ({
@@ -83,6 +88,10 @@ const toProject = (row: ProjectRow): Project => ({
   confidential: row.confidential,
   featured: row.featured,
   sortOrder: row.sort_order,
+  overview: row.overview,
+  accent: row.accent,
+  imageAlt: row.image_alt,
+  gallery: row.confidential ? [] : (row.gallery ?? []),
 });
 
 /** 최근 활동순. 활동 기록이 없는 프로젝트는 뒤로 보냅니다. */

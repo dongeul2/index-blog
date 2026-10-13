@@ -82,7 +82,15 @@ export type Project = {
   confidential: boolean;
   featured: boolean;
   sortOrder: number;
+  /** 쇼케이스 소개 글(2~4문장) */
+  overview: string;
+  /** 프로젝트 고유 강조색 #RRGGBB */
+  accent: string | null;
+  imageAlt: string | null;
+  gallery: GalleryImage[];
 };
+
+export type GalleryImage = { src: string; alt: string; caption?: string };
 
 export type ProjectKind = "personal" | "work";
 

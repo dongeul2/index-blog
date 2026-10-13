@@ -8,8 +8,6 @@
  */
 export type Profile = {
   name: string;
-  /** 이름을 그리는 히어로용 로마자 표기 */
-  nameLatin: string;
   role: string;
   /** 한두 문장. 무엇을 잘하는 사람인지 */
   intro: string;
@@ -22,7 +20,6 @@ export type Profile = {
 
 export const PROFILE: Profile = {
   name: "이름",
-  nameLatin: "Your Name",
   role: "프론트엔드 개발자",
   intro: "실시간으로 움직이는 화면과, 그 화면이 틀리지 않게 지키는 테스트를 함께 만듭니다.",
   birth: "",

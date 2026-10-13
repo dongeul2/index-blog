@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
 import { PROFILE } from "@/content/profile";
 import { getExperiences, getProjects, getProjectSkills, getSkills } from "@/lib/projects";
 import { getPosts } from "@/lib/posts";
@@ -32,7 +33,9 @@ export default async function PortfolioPage() {
       .filter((s): s is Skill => Boolean(s));
 
   const byOrder = (a: Project, b: Project) =>
-    a.sortOrder - b.sortOrder || (b.periodStart ?? "").localeCompare(a.periodStart ?? "");
+    Number(b.featured) - Number(a.featured) ||
+    a.sortOrder - b.sortOrder ||
+    (b.periodStart ?? "").localeCompare(a.periodStart ?? "");
   const items = [...projects].sort(byOrder).map((project) => ({ project, skills: skillsOf(project.slug) }));
 
   // 범례의 숫자 — 그 역량을 쓴 프로젝트 수
@@ -48,9 +51,16 @@ export default async function PortfolioPage() {
     <div className="folio">
       <Hero
         name={PROFILE.name}
-        nameLatin={PROFILE.nameLatin}
         role={PROFILE.role}
         intro={PROFILE.intro}
+        github={PROFILE.github}
+        cards={items.map(({ project: p }) => ({
+          slug: p.slug,
+          name: p.name,
+          imageUrl: p.imageUrl,
+          imageAlt: p.imageAlt,
+          accent: p.accent,
+        }))}
       />
 
       <SkillFilterProvider known={skills.map((s) => s.slug)}>
@@ -59,16 +69,18 @@ export default async function PortfolioPage() {
             <TitleBlock profile={PROFILE} />
           </FolioSection>
 
-          <FolioSection id="skills" title="역량">
+          <FolioSection id="skills" title="역량" lead="누르면 그 역량을 쓴 프로젝트와 경력만 남습니다.">
             <SkillLegend skills={skills} usage={usage} />
           </FolioSection>
 
-          <FolioSection id="archive" title="코드와 기록">
+          <FolioSection id="archive" title="코드와 기록" lead="결과물 뒤의 과정은 여기에 남깁니다.">
             <ul className="archive-links">
               {PROFILE.github && (
                 <li>
                   <a href={`https://github.com/${PROFILE.github}`} rel="noreferrer noopener" target="_blank">
-                    <span className="archive-links__name">GitHub</span>
+                    <span className="archive-links__name">
+                      GitHub <ArrowUpRight aria-hidden="true" size={20} />
+                    </span>
                     <span className="archive-links__desc">
                       코드 저장소. 이 사이트의 이슈·PR·CI 기록도 공개되어 있습니다.
                     </span>
@@ -78,7 +90,9 @@ export default async function PortfolioPage() {
               )}
               <li>
                 <Link href="/notes">
-                  <span className="archive-links__name">기록</span>
+                  <span className="archive-links__name">
+                    기록 <ArrowUpRight aria-hidden="true" size={20} />
+                  </span>
                   <span className="archive-links__desc">
                     {posts.length > 0
                       ? `개발하면서 남긴 글 ${posts.length}편.`
@@ -89,7 +103,7 @@ export default async function PortfolioPage() {
             </ul>
           </FolioSection>
 
-          <FolioSection id="projects" title="프로젝트">
+          <FolioSection id="projects" title="프로젝트" lead="무엇을 왜 그렇게 만들었는지까지 적었습니다.">
             <ProjectList items={items} />
           </FolioSection>
 
@@ -106,12 +120,25 @@ export default async function PortfolioPage() {
   );
 }
 
-function FolioSection({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
+function FolioSection({
+  id,
+  title,
+  lead,
+  children,
+}: {
+  id: string;
+  title: string;
+  lead?: string;
+  children: React.ReactNode;
+}) {
   return (
     <section id={id} className="folio-section" aria-labelledby={`${id}-title`}>
-      <h2 id={`${id}-title`} className="folio-section__title">
-        {title}
-      </h2>
+      <div className="folio-section__head">
+        <h2 id={`${id}-title`} className="folio-section__title">
+          {title}
+        </h2>
+        {lead && <p className="folio-section__lead">{lead}</p>}
+      </div>
       {children}
     </section>
   );
