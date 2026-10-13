@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { Experience, Project, Skill } from "@/lib/project-types";
 import { formatPeriod, periodLength } from "@/lib/period";
 import { useSkillFilter } from "./skill-filter";
+import { ExperienceEditor } from "./edit/experience-editor";
 
 type Entry = { experience: Experience; projects: { project: Project; skills: Skill[] }[] };
 
@@ -28,6 +29,7 @@ export function Career({ entries }: { entries: Entry[] }) {
             </div>
             <div className="career__body">
               <h3 className="career__org">{e.organization}</h3>
+              <ExperienceEditor experience={e} />
               <p className="career__title">{e.title}</p>
               {e.summary && <p className="career__summary">{e.summary}</p>}
               {e.highlights.length > 0 && (

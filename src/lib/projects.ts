@@ -7,6 +7,7 @@ import type {
   Experience,
   GalleryImage,
   Metric,
+  Profile,
   Project,
   ProjectKind,
   ProjectSkill,
@@ -17,6 +18,7 @@ import type {
   Skill,
   SkillCategory,
 } from "./project-types";
+import { EMPTY_PROFILE } from "./project-types";
 
 export * from "./project-types";
 
@@ -239,4 +241,25 @@ export const getProjectSkills = cache(async (): Promise<ProjectSkill[]> => {
 
   if (error) throw new Error(`프로젝트 역량을 불러오지 못했습니다: ${error.message}`);
   return data.map((r) => ({ projectSlug: r.project_slug, skillSlug: r.skill_slug, note: r.note }));
+});
+
+export const getProfile = cache(async (): Promise<Profile> => {
+  const { data, error } = await supabasePublic
+    .from("profile")
+    .select("name, name_latin, tagline, intro, birth, location, education, email, github")
+    .maybeSingle();
+
+  if (error) throw new Error(`인적 사항을 불러오지 못했습니다: ${error.message}`);
+  if (!data) return EMPTY_PROFILE;
+  return {
+    name: data.name,
+    nameLatin: data.name_latin,
+    tagline: data.tagline,
+    intro: data.intro,
+    birth: data.birth,
+    location: data.location,
+    education: data.education,
+    email: data.email,
+    github: data.github,
+  };
 });

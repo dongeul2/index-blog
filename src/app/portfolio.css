@@ -1,26 +1,246 @@
 /* ============================================================
-   포트폴리오 홈 — 쇼케이스
-   바탕·글자는 사이트 토큰을 따르고(헤더와 이어지게), 홈에서만 쓰는 값은 --f-* 로 둡니다.
-   화려함은 프로젝트 이미지와 프로젝트별 강조색(--accent)에서 나오고, 나머지는 여백과 정렬로 조용히.
+   포트폴리오 홈 — 제도 용지 + 프로젝트 쇼케이스
+   히어로(플로터가 그리는 이름 + CAD 커서)와 프로젝트(커버·강조색)만 눈에 띄고, 나머지는 조용히.
+   그림자는 쓰지 않습니다 — 층은 괘선과 면 색으로 나눕니다.
    ============================================================ */
 @layer components {
+  /* ---------- 히어로: 용지 · 플로터 · 커서 ---------- */
+  .hero {
+    position: relative;
+    overflow: hidden;
+    min-height: min(78vh, 46rem);
+    display: flex;
+    align-items: flex-end;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .hero__grid {
+    position: absolute;
+    inset: 0;
+    /* 4mm 잔 눈금 + 20mm 굵은 눈금 */
+    background-image:
+      linear-gradient(to right, color-mix(in oklch, var(--color-border) 45%, transparent) 1px, transparent 1px),
+      linear-gradient(to bottom, color-mix(in oklch, var(--color-border) 45%, transparent) 1px, transparent 1px),
+      linear-gradient(to right, var(--color-border) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--color-border) 1px, transparent 1px);
+    background-size: 16px 16px, 16px 16px, 80px 80px, 80px 80px;
+    mask-image: radial-gradient(ellipse 85% 80% at 30% 60%, #000 35%, transparent 100%);
+    animation: hero-grid 900ms ease-out both;
+  }
+  .hero__inner {
+    position: relative;
+    width: 100%;
+    padding-block: 6rem 3.5rem;
+  }
+  .hero__role {
+    font-size: 1rem;
+    color: var(--color-text-2);
+    animation: hero-in 500ms ease-out 1.6s both;
+  }
+  .hero__title { margin-top: 0.75rem; }
+  .hero__name {
+    display: block;
+    width: min(100%, 62rem);
+    height: auto;
+    overflow: visible;
+  }
+  .hero__name text {
+    font-family: var(--font-sans);
+    font-size: 150px;
+    font-weight: 800;
+    letter-spacing: -0.045em;
+    /* 색은 고정하고 불투명도만 움직입니다 — @keyframes 안의 var()는 테마 전환 때 기본값(검정)으로 떨어집니다 */
+    fill: var(--color-text);
+    fill-opacity: 0;
+    stroke: var(--color-accent);
+    stroke-width: 1.25;
+    stroke-dasharray: 2400;
+    stroke-dashoffset: 2400;
+    animation:
+      hero-draw 2.2s cubic-bezier(0.6, 0, 0.3, 1) 0.3s forwards,
+      hero-fill 600ms ease-out 2.1s forwards;
+  }
+  .hero__intro {
+    margin-top: 1.5rem;
+    max-width: 34ch;
+    font-size: 1.25rem;
+    line-height: 1.6;
+    color: var(--color-text-2);
+    animation: hero-in 500ms ease-out 1.8s both;
+  }
+  .hero__next {
+    display: inline-block;
+    margin-top: 2.5rem;
+    font-size: 0.875rem;
+    color: var(--color-text-2);
+    text-underline-offset: 6px;
+    animation: hero-in 500ms ease-out 2s both;
+  }
+  .hero__next:hover { color: var(--color-accent); }
+
+  .hero__cursor {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 200ms ease;
+  }
+  .hero[data-cursor="on"] .hero__cursor { opacity: 1; }
+  .hero__cx,
+  .hero__cy {
+    position: absolute;
+    background: color-mix(in oklch, var(--color-accent) 55%, transparent);
+  }
+  .hero__cx { top: 0; bottom: 0; left: 0; width: 1px; transform: translateX(var(--x, 0)); }
+  .hero__cy { left: 0; right: 0; top: 0; height: 1px; transform: translateY(var(--y, 0)); }
+  .hero__readout {
+    position: absolute;
+    left: 0;
+    top: 0;
+    white-space: pre;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    color: var(--color-accent);
+    transform: translate(calc(var(--x, 0px) + 12px), calc(var(--y, 0px) + 12px));
+  }
+
+  @keyframes hero-grid { from { opacity: 0; } }
+  @keyframes hero-in { from { opacity: 0; transform: translateY(6px); } }
+  @keyframes hero-draw { to { stroke-dashoffset: 0; } }
+  @keyframes hero-fill { to { fill-opacity: 1; stroke-opacity: 0; } }
+
+  /* ---------- 섹션 ---------- */
+  .folio-section {
+    padding-top: 6rem;
+    scroll-margin-top: 3rem;
+  }
+  .folio-section:last-child { padding-bottom: 7rem; }
+  .folio-section__title {
+    font-size: var(--text-h2);
+    line-height: var(--text-h2--line-height);
+    letter-spacing: var(--text-h2--letter-spacing);
+    font-weight: 700;
+    padding-bottom: 1rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--color-border-strong);
+  }
+
+  .empty-note {
+    padding: 1.5rem;
+    border: 1px dashed var(--color-border-strong);
+    color: var(--color-text-muted);
+    font-size: 0.9375rem;
+  }
+
+  /* ---------- 소개: 표제란 ---------- */
+  .title-block {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+    gap: 1px;
+    background: var(--color-border-strong);
+    border: 1px solid var(--color-border-strong);
+  }
+  .title-block__cell {
+    background: var(--color-bg);
+    padding: 1rem 1.25rem 1.125rem;
+  }
+  .title-block dt {
+    font-size: var(--text-caption);
+    color: var(--color-text-muted);
+  }
+  .title-block dd {
+    margin-top: 0.25rem;
+    font-size: 1.0625rem;
+    color: var(--color-text);
+    overflow-wrap: anywhere;
+  }
+
+  /* ---------- 역량: 범례 ---------- */
+  .legend__row {
+    display: grid;
+    gap: 0.75rem;
+    padding-block: 1rem;
+    border-top: 1px solid var(--color-border);
+  }
+  .legend__row:first-child { border-top: 0; padding-top: 0; }
+  @media (min-width: 40rem) {
+    .legend__row { grid-template-columns: 9rem 1fr; align-items: baseline; }
+  }
+  .legend__label {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--color-text-2);
+  }
+  .legend__items { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .legend__chip {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.375rem;
+    padding: 0.3125rem 0.75rem;
+    border: 1px solid var(--color-border-strong);
+    background: transparent;
+    color: var(--color-text);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: border-color 120ms ease, background-color 120ms ease;
+  }
+  .legend__chip:hover { border-color: var(--color-accent); }
+  .legend__chip[aria-pressed="true"] {
+    background: var(--color-accent-bg);
+    border-color: var(--color-accent);
+  }
+  .legend__count {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .legend__status {
+    margin-top: 1.25rem;
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+  }
+  .legend__status strong { color: var(--color-text); font-weight: 600; }
+  .legend__clear {
+    background: none;
+    border: 0;
+    padding: 0;
+    font: inherit;
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    cursor: pointer;
+  }
+
+  /* ---------- 코드와 기록 ---------- */
+  .archive-links { display: grid; gap: 1rem; }
+  @media (min-width: 40rem) { .archive-links { grid-template-columns: 1fr 1fr; } }
+  .archive-links a {
+    display: grid;
+    gap: 0.375rem;
+    height: 100%;
+    padding: 1.25rem 1.5rem;
+    border: 1px solid var(--color-border-strong);
+    text-decoration: none;
+    transition: border-color 120ms ease;
+  }
+  .archive-links a:hover { border-color: var(--color-accent); }
+  .archive-links__name { font-size: var(--text-h3); font-weight: 700; color: var(--color-text); }
+  .archive-links__desc { font-size: 0.9375rem; color: var(--color-text-2); }
+
+  /* 프로젝트 쇼케이스만 쓰는 값 — 둥근 모서리와 프로젝트별 강조색(--accent). 그림자는 쓰지 않습니다 */
   .folio {
-    --f-accent: oklch(0.52 0.25 275);          /* 울트라마린 — 홈의 기본 강조색 */
+    --f-accent: oklch(0.52 0.25 275);
     --f-on-accent: oklch(0.99 0 0);
     --f-card: oklch(1 0 0);
     --f-line: oklch(0.92 0.004 265);
-    --f-shadow: 0 1px 2px oklch(0.2 0.02 265 / 0.05), 0 18px 40px -24px oklch(0.2 0.02 265 / 0.25);
     --f-r-lg: 28px;
     --f-r: 16px;
     --accent: var(--f-accent);
-    background: var(--color-bg);
   }
   :root:not([data-theme="light"]) .folio {
     --f-accent: oklch(0.72 0.16 280);
     --f-on-accent: oklch(0.2 0.03 280);
     --f-card: oklch(0.25 0.012 265);
     --f-line: oklch(0.32 0.013 265);
-    --f-shadow: 0 0 0 1px oklch(0.32 0.013 265), 0 24px 48px -28px oklch(0 0 0 / 0.7);
   }
 
   /* ---------- 공통 조각 ---------- */
@@ -92,265 +312,6 @@
   }
   .cover { container-type: inline-size; }
 
-  .empty-note {
-    padding: 2rem;
-    border: 1px dashed var(--f-line);
-    border-radius: var(--f-r);
-    color: var(--color-text-muted);
-    text-align: center;
-  }
-
-  /* ---------- 히어로 ---------- */
-  .hero { position: relative; overflow: hidden; }
-  .hero::before {
-    /* 은은한 점 격자 — 장식이 아니라 "작업대" 바닥 */
-    content: "";
-    position: absolute;
-    inset: 0;
-    background-image: radial-gradient(color-mix(in oklch, var(--color-text) 14%, transparent) 1px, transparent 1.2px);
-    background-size: 22px 22px;
-    mask-image: radial-gradient(ellipse 70% 70% at 70% 45%, #000 20%, transparent 75%);
-    pointer-events: none;
-  }
-  .hero__inner {
-    position: relative;
-    display: grid;
-    gap: 3rem;
-    align-items: center;
-    min-height: min(74vh, 46rem);
-    padding-block: 4rem 3rem;
-  }
-  @media (min-width: 64rem) { .hero__inner { grid-template-columns: 1fr 1.1fr; gap: 2rem; } }
-
-  .hero__role {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.375rem 0.875rem 0.375rem 0.625rem;
-    border: 1px solid var(--f-line);
-    border-radius: 999px;
-    background: var(--f-card);
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--color-text-2);
-  }
-  .hero__role::before {
-    content: "";
-    width: 0.5rem;
-    height: 0.5rem;
-    border-radius: 50%;
-    background: var(--f-accent);
-  }
-  .hero__name {
-    margin-top: 1.5rem;
-    font-size: clamp(3.25rem, 9vw, 7rem);
-    font-weight: 800;
-    line-height: 0.95;
-    letter-spacing: -0.055em;
-    color: var(--color-text);
-    text-wrap: balance;
-  }
-  .hero__intro {
-    margin-top: 1.5rem;
-    max-width: 30ch;
-    font-size: clamp(1.125rem, 1.6vw, 1.375rem);
-    line-height: 1.55;
-    color: var(--color-text-2);
-    text-wrap: pretty;
-  }
-  .hero__actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 2.25rem; }
-
-  /* 카드 묶음 — 펼쳐지는 부채 + 포인터 3D 기울기 */
-  .hero__stage {
-    perspective: 1400px;
-    height: clamp(18rem, 38vw, 30rem);
-  }
-  .hero__fan {
-    position: relative;
-    height: 100%;
-    transform-style: preserve-3d;
-    transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
-    transition: transform 500ms cubic-bezier(0.2, 0.7, 0.2, 1);
-  }
-  .hero__card {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    width: min(78%, 34rem);
-    translate: calc(-50% + var(--o) * 34%) calc(-50% + var(--d) * 9%) calc(var(--d) * -90px);
-    rotate: calc(var(--o) * 8deg);
-    transition: translate 300ms ease, scale 300ms ease;
-    animation: fan-in 1100ms cubic-bezier(0.2, 0.8, 0.2, 1) calc(150ms + var(--d) * 140ms) both;
-  }
-  .hero__card a { display: block; border-radius: var(--f-r-lg); text-decoration: none; }
-  .hero__card .cover {
-    border-radius: var(--f-r-lg);
-    box-shadow:
-      0 0 0 1px oklch(1 0 0 / 0.08) inset,
-      0 50px 80px -40px color-mix(in oklch, var(--accent) 70%, black),
-      0 20px 40px -20px oklch(0 0 0 / 0.35);
-  }
-  .hero__card:hover { scale: 1.03; }
-  /* 히어로에서는 이름표가 이름을 말하므로 표지 글자는 숨깁니다 */
-  .hero__card .cover__generated span { display: none; }
-  .hero__card-name {
-    position: absolute;
-    left: 1rem;
-    bottom: 1rem;
-    padding: 0.375rem 0.75rem;
-    border-radius: 999px;
-    background: oklch(1 0 0 / 0.88);
-    backdrop-filter: blur(8px);
-    font-size: 0.8125rem;
-    font-weight: 700;
-    color: oklch(0.2 0.01 265);
-  }
-  @keyframes fan-in {
-    from { translate: -50% -40% 0; rotate: 0deg; opacity: 0; scale: 0.92; }
-  }
-  @media (max-width: 63.99rem) {
-    .hero__stage { height: clamp(14rem, 62vw, 22rem); }
-    /* 좁은 폭에서는 덜 펼쳐 카드가 화면 밖으로 잘리지 않게 */
-    .hero__card {
-      width: min(70%, 30rem);
-      translate: calc(-50% + var(--o) * 22%) calc(-50% + var(--d) * 7%) calc(var(--d) * -90px);
-      rotate: calc(var(--o) * 6deg);
-    }
-  }
-
-  /* ---------- 섹션 ---------- */
-  .folio-section {
-    padding-top: clamp(5rem, 10vw, 8rem);
-    scroll-margin-top: 3rem;
-  }
-  .folio-section:last-child { padding-bottom: clamp(5rem, 10vw, 8rem); }
-  .folio-section__head { margin-bottom: 2.5rem; }
-  .folio-section__title {
-    font-size: clamp(2rem, 4.5vw, 3.25rem);
-    font-weight: 800;
-    line-height: 1.05;
-    letter-spacing: -0.045em;
-  }
-  .folio-section__lead {
-    margin-top: 0.75rem;
-    font-size: 1.0625rem;
-    color: var(--color-text-2);
-  }
-
-  /* ---------- 소개 ---------- */
-  .title-block {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
-    gap: 1rem;
-  }
-  .title-block__cell {
-    padding: 1.25rem 1.5rem;
-    border-radius: var(--f-r);
-    background: var(--f-card);
-    box-shadow: var(--f-shadow);
-  }
-  .title-block dt { font-size: var(--text-caption); color: var(--color-text-muted); }
-  .title-block dd {
-    margin-top: 0.375rem;
-    font-size: 1.0625rem;
-    font-weight: 600;
-    color: var(--color-text);
-    overflow-wrap: anywhere;
-  }
-
-  /* ---------- 역량 ---------- */
-  .legend {
-    display: grid;
-    gap: 1rem;
-  }
-  @media (min-width: 48rem) { .legend { grid-template-columns: 1fr 1fr; } }
-  .legend__row {
-    padding: 1.25rem 1.5rem 1.5rem;
-    border-radius: var(--f-r);
-    background: var(--f-card);
-    box-shadow: var(--f-shadow);
-  }
-  .legend__label {
-    margin-bottom: 0.875rem;
-    font-size: 0.9375rem;
-    font-weight: 700;
-    color: var(--color-text);
-  }
-  .legend__items { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-  .legend__chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.4rem 0.875rem;
-    border: 1px solid var(--f-line);
-    border-radius: 999px;
-    background: transparent;
-    color: var(--color-text);
-    font-size: 0.875rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
-  }
-  .legend__chip:hover { border-color: var(--f-accent); }
-  .legend__chip[aria-pressed="true"] {
-    background: var(--f-accent);
-    border-color: var(--f-accent);
-    color: var(--f-on-accent);
-  }
-  .legend__count {
-    min-width: 1.25rem;
-    padding-inline: 0.3rem;
-    border-radius: 999px;
-    background: color-mix(in oklch, currentColor 12%, transparent);
-    font-size: 0.6875rem;
-    text-align: center;
-    font-variant-numeric: tabular-nums;
-  }
-  .legend__status {
-    grid-column: 1 / -1;
-    font-size: 0.875rem;
-    color: var(--color-text-muted);
-  }
-  .legend__status strong { color: var(--color-text); }
-  .legend__clear {
-    background: none;
-    border: 0;
-    padding: 0;
-    font: inherit;
-    font-weight: 600;
-    color: var(--f-accent);
-    text-decoration: underline;
-    text-underline-offset: 4px;
-    cursor: pointer;
-  }
-
-  /* ---------- 코드와 기록 ---------- */
-  .archive-links { display: grid; gap: 1rem; }
-  @media (min-width: 40rem) { .archive-links { grid-template-columns: 1fr 1fr; } }
-  .archive-links a {
-    display: grid;
-    gap: 0.5rem;
-    height: 100%;
-    padding: 1.75rem 1.75rem 2rem;
-    border-radius: var(--f-r-lg);
-    background: var(--f-card);
-    box-shadow: var(--f-shadow);
-    text-decoration: none;
-    transition: transform 200ms ease, box-shadow 200ms ease;
-  }
-  .archive-links a:hover { transform: translateY(-3px); }
-  .archive-links__name {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-size: 1.5rem;
-    font-weight: 800;
-    letter-spacing: -0.03em;
-    color: var(--color-text);
-  }
-  .archive-links__name svg { color: var(--f-accent); }
-  .archive-links__desc { color: var(--color-text-2); }
-
   /* ---------- 프로젝트: 쇼케이스 ---------- */
   .showcases { display: grid; gap: clamp(4rem, 9vw, 7rem); }
   .showcase {
@@ -372,7 +333,6 @@
         color-mix(in oklch, var(--accent) 6%, transparent) 70%);
   }
   .frame .cover {
-    box-shadow: 0 40px 70px -40px color-mix(in oklch, var(--accent) 75%, black);
   }
   /* 스크롤에 따라 커버 안의 이미지가 살짝 흐릅니다(지원 브라우저만) */
   @supports (animation-timeline: view()) {
@@ -504,30 +464,29 @@
   .mini__desc { font-size: 0.9375rem; color: var(--color-text-2); }
   .mini .stack { margin-top: 0.875rem; }
 
-  /* ---------- 경력 ---------- */
+  /* ---------- 경력: 타임라인 ---------- */
   .career {
     position: relative;
     display: grid;
-    gap: 1.5rem;
-    padding-left: 2rem;
+    gap: 3rem;
+    padding-left: 1.75rem;
   }
   .career__rail {
     position: absolute;
-    left: 0.4375rem;
-    top: 1.75rem;
-    bottom: 1.75rem;
-    width: 2px;
-    border-radius: 2px;
-    background: var(--f-line);
+    left: 0;
+    top: 0.5rem;
+    bottom: 0;
+    width: 1px;
+    background: var(--color-border-strong);
   }
   .career__rail::after {
     content: "";
     position: absolute;
     inset: 0;
-    border-radius: inherit;
-    background: var(--f-accent);
+    background: var(--color-accent);
     transform-origin: top;
   }
+  /* 지원하는 브라우저에서만 스크롤에 따라 채워지고, 아니면 처음부터 채워져 있습니다 */
   @supports (animation-timeline: view()) {
     .career__rail::after {
       animation: rail-fill linear both;
@@ -536,45 +495,49 @@
     }
   }
   @keyframes rail-fill { from { transform: scaleY(0); } }
+
   .career__item {
     position: relative;
     display: grid;
-    gap: 0.75rem 2rem;
-    padding: 1.5rem 1.75rem;
-    border-radius: var(--f-r);
-    background: var(--f-card);
-    box-shadow: var(--f-shadow);
+    gap: 0.5rem 2rem;
     transition: opacity 200ms ease;
   }
   .career__item::before {
     content: "";
     position: absolute;
-    left: calc(-2rem + 0.0625rem);
-    top: 1.75rem;
-    width: 0.875rem;
-    height: 0.875rem;
-    border-radius: 50%;
+    left: calc(-1.75rem - 4px);
+    top: 0.5rem;
+    width: 9px;
+    height: 9px;
     background: var(--color-bg);
-    border: 3px solid var(--f-accent);
+    border: 1px solid var(--color-accent);
   }
   .career__item[data-dim] { opacity: 0.4; }
-  @media (min-width: 48rem) { .career__item { grid-template-columns: 10rem 1fr; } }
-  .career__when { display: grid; align-content: start; font-weight: 600; font-variant-numeric: tabular-nums; }
-  .career__len { font-size: var(--text-caption); font-weight: 400; color: var(--color-text-muted); }
-  .career__org { font-size: 1.375rem; font-weight: 800; letter-spacing: -0.03em; }
+  @media (min-width: 48rem) { .career__item { grid-template-columns: 11rem 1fr; } }
+  .career__when {
+    display: grid;
+    font-size: 0.875rem;
+    color: var(--color-text-2);
+    font-variant-numeric: tabular-nums;
+  }
+  .career__len { font-size: var(--text-caption); color: var(--color-text-muted); }
+  .career__org { font-size: var(--text-h3); font-weight: 700; }
   .career__title { color: var(--color-text-2); }
   .career__summary { margin-top: 0.5rem; color: var(--color-text-2); max-width: 65ch; }
-  .career__highlights { margin-top: 0.75rem; display: grid; gap: 0.25rem; padding-left: 1.125rem; list-style: disc; color: var(--color-text-2); }
-  .career__projects { margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem; }
-  .career__projects a {
-    display: inline-block;
-    padding: 0.25rem 0.75rem;
-    border-radius: 999px;
-    background: color-mix(in oklch, var(--f-accent) 12%, transparent);
-    font-size: 0.8125rem;
-    font-weight: 600;
-    color: var(--color-text);
-    text-decoration: none;
+  .career__highlights {
+    margin-top: 0.75rem;
+    display: grid;
+    gap: 0.25rem;
+    padding-left: 1.125rem;
+    list-style: square;
+    color: var(--color-text-2);
+  }
+  .career__projects {
+    margin-top: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.25rem;
+    font-size: 0.875rem;
   }
   .career__projects li[data-dim] { opacity: 0.4; }
 
@@ -592,16 +555,18 @@
 
   /* ---------- 필터 전환 ---------- */
   ::view-transition-group(*) {
-    animation-duration: 300ms;
+    animation-duration: 260ms;
     animation-timing-function: cubic-bezier(0.3, 0, 0.2, 1);
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .hero__card { animation: none; transition: none; }
-    .hero__fan { transition: none; }
-    .cover--drift .cover__img { animation: none; }
+    .hero__grid,
+    .hero__role,
+    .hero__intro,
+    .hero__next { animation: none; }
+    .hero__name text { animation: none; fill-opacity: 1; stroke: none; }
     .career__rail::after { animation: none; }
-    .archive-links a, .cover--mini { transition: none; }
+    .cover--drift .cover__img, .cover--mini { animation: none; transition: none; }
     ::view-transition-group(*) { animation: none; }
   }
 }

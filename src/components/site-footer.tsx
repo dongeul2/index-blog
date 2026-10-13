@@ -10,13 +10,14 @@ export function SiteFooter() {
             INDEX.
           </Link>
           <p className="site-footer__note" style={{ marginTop: "0.5rem" }}>
-            프론트엔드 개발자의 포트폴리오와 개발 기록.
+            포트폴리오와 개발 기록.
           </p>
         </div>
         <div className="site-footer__links">
           <Link href="/notes">기록</Link>
           <Link href="/archive">아카이브</Link>
           <Link href="/tags">태그</Link>
+          <Link href="/admin/login?next=/">관리자</Link>
           <BackToTop />
         </div>
       </div>

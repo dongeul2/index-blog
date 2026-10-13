@@ -174,3 +174,30 @@ export type Channel = {
 export const SLUG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 /** owner/repo */
 export const REPO_PATTERN = /^[A-Za-z0-9._-]+\/[A-Za-z0-9._-]+$/;
+
+/** 홈 첫 화면·소개의 인적 사항(profile 테이블, 한 행). 빈 값은 화면에서 빠집니다 */
+export type Profile = {
+  name: string;
+  /** 히어로에서 선으로 그리는 이름. 비면 name */
+  nameLatin: string;
+  /** 하는 일 한 줄 — 직무 하나로 못 박지 않습니다 */
+  tagline: string;
+  intro: string;
+  birth: string;
+  location: string;
+  education: string;
+  email: string;
+  github: string;
+};
+
+export const EMPTY_PROFILE: Profile = {
+  name: "",
+  nameLatin: "",
+  tagline: "",
+  intro: "",
+  birth: "",
+  location: "",
+  education: "",
+  email: "",
+  github: "",
+};

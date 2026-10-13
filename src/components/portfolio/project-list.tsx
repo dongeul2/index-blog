@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
-import { PROJECT_KIND_LABEL, type Project, type Skill } from "@/lib/project-types";
+import { PROJECT_KIND_LABEL, type Experience, type Project, type Skill } from "@/lib/project-types";
 import { formatPeriod } from "@/lib/period";
 import { ProjectCover } from "./project-cover";
 import { useSkillFilter } from "./skill-filter";
+import { ProjectEditor } from "./edit/project-editor";
 
 type Item = { project: Project; skills: Skill[] };
 
@@ -15,29 +16,39 @@ type Item = { project: Project; skills: Skill[] };
  * 남는 카드는 제자리로 미끄러지고 빠지는 카드는 사라집니다.
  * 프로젝트 강조색(--accent)이 커버 프레임과 수치에 번집니다.
  */
-export function ProjectList({ items }: { items: Item[] }) {
+type EditCtx = { allSkills: Skill[]; experiences: Experience[] };
+
+export function ProjectList({ items, allSkills, experiences }: { items: Item[] } & EditCtx) {
   const { skill } = useSkillFilter();
+  const ctx = { allSkills, experiences };
   const match = (i: Item) => !skill || i.skills.some((s) => s.slug === skill);
 
   const featured = items.filter((i) => i.project.featured && match(i));
   const others = items.filter((i) => !i.project.featured && match(i));
 
+  // 편집 모드에서만 보이는 「프로젝트 추가」
+  const add = <ProjectEditor {...ctx} />;
+
   if (featured.length + others.length === 0) {
     return (
-      <p className="empty-note">
+      <>
+        {add}
+        <p className="empty-note">
         {items.length === 0
           ? "아직 등록한 프로젝트가 없습니다."
           : "이 역량을 쓴 프로젝트가 없습니다. 위에서 필터를 풀어 보세요."}
-      </p>
+        </p>
+      </>
     );
   }
 
   return (
     <>
+      {add}
       {featured.length > 0 && (
         <ol className="showcases">
           {featured.map((item) => (
-            <Showcase key={item.project.slug} item={item} active={skill} />
+            <Showcase key={item.project.slug} item={item} active={skill} ctx={ctx} />
           ))}
         </ol>
       )}
@@ -62,6 +73,7 @@ export function ProjectList({ items }: { items: Item[] }) {
                   {p.description && <span className="mini__desc">{p.description}</span>}
                 </Link>
                 <Stack skills={skills} active={skill} />
+                <ProjectEditor project={p} projectSkills={skills} {...ctx} />
               </li>
             ))}
           </ul>
@@ -71,7 +83,15 @@ export function ProjectList({ items }: { items: Item[] }) {
   );
 }
 
-function Showcase({ item: { project: p, skills }, active }: { item: Item; active: string | null }) {
+function Showcase({
+  item: { project: p, skills },
+  active,
+  ctx,
+}: {
+  item: Item;
+  active: string | null;
+  ctx: EditCtx;
+}) {
   const gallery = p.gallery.slice(0, 3);
   return (
     <li
@@ -153,6 +173,11 @@ function Showcase({ item: { project: p, skills }, active }: { item: Item; active
             </a>
           )}
         </div>
+      </div>
+
+      {/* 편집 패널은 쇼케이스 두 칸을 다 씁니다 */}
+      <div className="showcase__edit">
+        <ProjectEditor project={p} projectSkills={skills} {...ctx} />
       </div>
     </li>
   );

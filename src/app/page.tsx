@@ -1,7 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
-import { PROFILE } from "@/content/profile";
-import { getExperiences, getProjects, getProjectSkills, getSkills } from "@/lib/projects";
+import { getExperiences, getProfile, getProjects, getProjectSkills, getSkills } from "@/lib/projects";
 import { getPosts } from "@/lib/posts";
 import type { Project, Skill } from "@/lib/project-types";
 import { Hero } from "@/components/portfolio/hero";
@@ -10,14 +8,19 @@ import { SkillFilterProvider } from "@/components/portfolio/skill-filter";
 import { SkillLegend } from "@/components/portfolio/skill-legend";
 import { ProjectList } from "@/components/portfolio/project-list";
 import { Career } from "@/components/portfolio/career";
+import { EditModeProvider } from "@/components/portfolio/edit/edit-mode";
+import { ProfileEditor } from "@/components/portfolio/edit/profile-editor";
+import { SkillsEditor } from "@/components/portfolio/edit/skills-editor";
+import { ExperienceEditor } from "@/components/portfolio/edit/experience-editor";
 
 /**
  * 홈 = 포트폴리오 한 장. 소개 → 역량 → 코드와 기록 → 프로젝트 → 경력.
  * 상단 메뉴의 항목이 각 섹션의 id로 이동합니다(`site-header.tsx`의 PORTFOLIO_NAV).
- * 데이터는 전부 DB(관리자 화면)에서, 인적 사항만 `content/profile.ts`에서 옵니다.
+ * 모든 내용은 DB에서 오고, 관리자는 이 화면에서 바로 고칩니다(`components/portfolio/edit`).
  */
 export default async function PortfolioPage() {
-  const [projects, skills, links, experiences, posts] = await Promise.all([
+  const [profile, projects, skills, links, experiences, posts] = await Promise.all([
+    getProfile(),
     getProjects(),
     getSkills(),
     getProjectSkills(),
@@ -48,87 +51,80 @@ export default async function PortfolioPage() {
   }));
 
   return (
-    <div className="folio">
-      <Hero
-        name={PROFILE.name}
-        role={PROFILE.role}
-        intro={PROFILE.intro}
-        github={PROFILE.github}
-        cards={items.map(({ project: p }) => ({
-          slug: p.slug,
-          name: p.name,
-          imageUrl: p.imageUrl,
-          imageAlt: p.imageAlt,
-          accent: p.accent,
-        }))}
-      />
+    <EditModeProvider>
+      <div className="folio">
+        <Hero
+          name={profile.name}
+          nameLatin={profile.nameLatin || profile.name || "Portfolio"}
+          role={profile.tagline}
+          intro={profile.intro}
+        />
 
-      <SkillFilterProvider known={skills.map((s) => s.slug)}>
-        <div className="page">
-          <FolioSection id="about" title="소개">
-            <TitleBlock profile={PROFILE} />
-          </FolioSection>
+        <SkillFilterProvider known={skills.map((s) => s.slug)}>
+          <div className="page">
+            <FolioSection id="about" title="소개" tools={<ProfileEditor profile={profile} />}>
+              <TitleBlock profile={profile} />
+            </FolioSection>
 
-          <FolioSection id="skills" title="역량" lead="누르면 그 역량을 쓴 프로젝트와 경력만 남습니다.">
-            <SkillLegend skills={skills} usage={usage} />
-          </FolioSection>
+            <FolioSection id="skills" title="역량">
+              <SkillLegend skills={skills} usage={usage} />
+              <SkillsEditor skills={skills} />
+            </FolioSection>
 
-          <FolioSection id="archive" title="코드와 기록" lead="결과물 뒤의 과정은 여기에 남깁니다.">
-            <ul className="archive-links">
-              {PROFILE.github && (
+            <FolioSection id="archive" title="코드와 기록">
+              <ul className="archive-links">
+                {profile.github && (
+                  <li>
+                    <a href={`https://github.com/${profile.github}`} rel="noreferrer noopener" target="_blank">
+                      <span className="archive-links__name">GitHub</span>
+                      <span className="archive-links__desc">
+                        코드 저장소. 이 사이트의 이슈·PR·CI 기록도 공개되어 있습니다.
+                      </span>
+                      <span className="sr-only"> (새 창)</span>
+                    </a>
+                  </li>
+                )}
                 <li>
-                  <a href={`https://github.com/${PROFILE.github}`} rel="noreferrer noopener" target="_blank">
-                    <span className="archive-links__name">
-                      GitHub <ArrowUpRight aria-hidden="true" size={20} />
-                    </span>
+                  <Link href="/notes">
+                    <span className="archive-links__name">기록</span>
                     <span className="archive-links__desc">
-                      코드 저장소. 이 사이트의 이슈·PR·CI 기록도 공개되어 있습니다.
+                      {posts.length > 0
+                        ? `개발하면서 남긴 글 ${posts.length}편.`
+                        : "개발하면서 남기는 글. 곧 첫 글을 올립니다."}
                     </span>
-                    <span className="sr-only"> (새 창)</span>
-                  </a>
+                  </Link>
                 </li>
+              </ul>
+            </FolioSection>
+
+            <FolioSection id="projects" title="프로젝트">
+              <ProjectList items={items} allSkills={skills} experiences={experiences} />
+            </FolioSection>
+
+            <FolioSection id="career" title="경력" tools={<ExperienceEditor />}>
+              {entries.length > 0 ? (
+                <Career entries={entries} />
+              ) : (
+                <p className="empty-note">경력 정보를 정리하고 있습니다.</p>
               )}
-              <li>
-                <Link href="/notes">
-                  <span className="archive-links__name">
-                    기록 <ArrowUpRight aria-hidden="true" size={20} />
-                  </span>
-                  <span className="archive-links__desc">
-                    {posts.length > 0
-                      ? `개발하면서 남긴 글 ${posts.length}편.`
-                      : "개발하면서 남기는 글. 곧 첫 글을 올립니다."}
-                  </span>
-                </Link>
-              </li>
-            </ul>
-          </FolioSection>
-
-          <FolioSection id="projects" title="프로젝트" lead="무엇을 왜 그렇게 만들었는지까지 적었습니다.">
-            <ProjectList items={items} />
-          </FolioSection>
-
-          <FolioSection id="career" title="경력">
-            {entries.length > 0 ? (
-              <Career entries={entries} />
-            ) : (
-              <p className="empty-note">경력 정보를 정리하고 있습니다.</p>
-            )}
-          </FolioSection>
-        </div>
-      </SkillFilterProvider>
-    </div>
+            </FolioSection>
+          </div>
+        </SkillFilterProvider>
+      </div>
+    </EditModeProvider>
   );
 }
 
 function FolioSection({
   id,
   title,
-  lead,
+  tools,
   children,
 }: {
   id: string;
   title: string;
-  lead?: string;
+  /** 편집 모드에서만 그려지는 도구(수정·추가 버튼) */
+  tools?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
@@ -137,7 +133,7 @@ function FolioSection({
         <h2 id={`${id}-title`} className="folio-section__title">
           {title}
         </h2>
-        {lead && <p className="folio-section__lead">{lead}</p>}
+        {tools}
       </div>
       {children}
     </section>

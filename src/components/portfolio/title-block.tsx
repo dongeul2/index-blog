@@ -1,4 +1,4 @@
-import type { Profile } from "@/content/profile";
+import type { Profile } from "@/lib/project-types";
 
 /**
  * 소개 — 도면 오른쪽 아래의 표제란처럼 칸을 나눈 인적 사항.
