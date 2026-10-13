@@ -29,7 +29,7 @@
 | 단위 | Vitest (`src/**/*.test.ts`) | 순수 함수, 동기 컴포넌트 |
 | E2E | Playwright (`e2e/`) | 실제 빌드 위의 화면 흐름 · 404 · 테마 · 데스크톱/모바일 |
 | 접근성 | axe (`@axe-core/playwright`) | WCAG 2 A/AA의 critical·serious 위반 0 |
-| 권한 | `scripts/check-rls.mjs` | 공개 키로 초안·예약 글이 실제로 막히는지 |
+| 권한 | `npm run test:rls` (CI 포함) | 공개 키로 초안·예약 글이 가려지고, 모든 테이블의 익명 쓰기가 막히는지 |
 
 버그를 고칠 때는 **그 버그를 다시 잡는 테스트를 먼저** 씁니다.
 
