@@ -1,24 +1,22 @@
 version: 2
 updates:
-  # next·react는 메이저가 오르면 API가 바뀌므로 문서를 읽고 직접 올립니다(AGENTS.md).
+  # 한 달에 npm 최대 2개(마이너·패치 / 메이저) + Actions 1개로 묶습니다.
+  # next·react 메이저는 문서를 읽고 직접 올립니다(AGENTS.md).
   - package-ecosystem: npm
     directory: /
     schedule:
-      interval: weekly
-      day: monday
+      interval: monthly
       timezone: Asia/Seoul
-    open-pull-requests-limit: 5
     labels: [deps]
     commit-message:
       prefix: build
-      include: scope
     groups:
-      dev-tooling:
-        dependency-type: development
+      npm-minor-patch:
+        patterns: ["*"]
         update-types: [minor, patch]
-      runtime-patch:
-        dependency-type: production
-        update-types: [patch]
+      npm-major:
+        patterns: ["*"]
+        update-types: [major]
     ignore:
       - dependency-name: next
         update-types: [version-update:semver-major]
@@ -31,3 +29,6 @@ updates:
     labels: [deps, ci]
     commit-message:
       prefix: ci
+    groups:
+      actions:
+        patterns: ["*"]
