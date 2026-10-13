@@ -66,7 +66,94 @@ export type Project = {
   imageUrl: string | null;
   /** 라이브 데모 등 바로가기 링크 */
   siteUrl: string | null;
+
+  /* ---- 포트폴리오 (20261013030247) ---- */
+  kind: ProjectKind;
+  experienceId: number | null;
+  /** 이 프로젝트에서 맡은 일 */
+  role: string | null;
+  /** YYYY-MM-DD */
+  periodStart: string | null;
+  periodEnd: string | null;
+  teamSize: number | null;
+  metrics: Metric[];
+  decisions: Decision[];
+  /** 사내 기밀 — 저장소·사이트·이미지를 감춥니다 */
+  confidential: boolean;
+  featured: boolean;
+  sortOrder: number;
 };
+
+export type ProjectKind = "personal" | "work";
+
+export const PROJECT_KIND_LABEL: Record<ProjectKind, string> = {
+  personal: "개인",
+  work: "회사",
+};
+
+export type Metric = { label: string; value: string; note?: string };
+
+export type Decision = {
+  title: string;
+  chosen?: string;
+  alternatives?: string[];
+  tradeoff?: string;
+};
+
+export type Experience = {
+  id: number;
+  organization: string;
+  title: string;
+  periodStart: string;
+  /** null = 재직 중 */
+  periodEnd: string | null;
+  summary: string;
+  highlights: string[];
+  confidential: boolean;
+};
+
+export type SkillCategory =
+  | "frontend"
+  | "backend"
+  | "realtime"
+  | "ai"
+  | "infra"
+  | "qa"
+  | "design"
+  | "process";
+
+/** 범례 순서 — 프론트엔드 포트폴리오라 프론트엔드가 맨 앞입니다 */
+export const SKILL_CATEGORIES: SkillCategory[] = [
+  "frontend",
+  "realtime",
+  "ai",
+  "qa",
+  "design",
+  "backend",
+  "infra",
+  "process",
+];
+
+export const SKILL_CATEGORY_LABEL: Record<SkillCategory, string> = {
+  frontend: "프론트엔드",
+  backend: "백엔드",
+  realtime: "실시간",
+  ai: "AI",
+  infra: "인프라",
+  qa: "품질",
+  design: "디자인",
+  process: "협업·프로세스",
+};
+
+export type Skill = {
+  slug: string;
+  name: string;
+  category: SkillCategory;
+  description: string;
+};
+
+/** 프로젝트에서 그 역량으로 한 일 */
+export type ProjectSkill = { projectSlug: string; skillSlug: string; note: string };
 
 export type Channel = {
   id: string;

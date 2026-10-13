@@ -10,18 +10,50 @@ import type { SearchItem } from "@/lib/search-index";
 import { ADMIN_TABS, isAdminTabCurrent } from "@/lib/admin-nav";
 import { Button } from "@/components/ui/button";
 
-const NAV = [
-  { href: "/", label: "홈" },
-  { href: "/archive", label: "아카이브" },
-  { href: "/projects", label: "프로젝트" },
-  { href: "/tags", label: "태그" },
+/** 홈(포트폴리오)의 섹션 — 다른 페이지에서는 `/#id`로 홈의 그 섹션으로 갑니다 */
+const PORTFOLIO_NAV = [
+  { id: "about", label: "소개", wide: true },
+  { id: "skills", label: "역량", wide: true },
+  { id: "projects", label: "프로젝트", wide: false },
+  { id: "career", label: "경력", wide: true },
 ];
+
+/** 「기록」이 현재 위치인 경로들 — 글·아카이브·태그·검색은 모두 기록의 하위입니다 */
+const NOTES_PATHS = ["/notes", "/archive", "/posts", "/tags", "/search"];
+
+/**
+ * 스크롤 스파이 — 홈에서 지금 화면 위쪽 30% 지점을 지나는 섹션을 고릅니다.
+ */
+function useSectionSpy(enabled: boolean) {
+  const [active, setActive] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!enabled) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) if (e.isIntersecting) setActive(e.target.id);
+      },
+      // 가는 띠 하나만 남겨, 한 번에 섹션 하나만 걸리게
+      { rootMargin: "-30% 0px -69% 0px" },
+    );
+    PORTFOLIO_NAV.forEach((n) => {
+      const el = document.getElementById(n.id);
+      if (el) io.observe(el);
+    });
+    return () => io.disconnect();
+  }, [enabled]);
+
+  return enabled ? active : null;
+}
 
 export function SiteHeader({ searchIndex }: { searchIndex: SearchItem[] }) {
   const pathname = usePathname();
   // 관리자 영역에서는 「사이트 보기 / 나가기」만 남긴 축소형으로 분기합니다.
   const isAdmin = pathname.startsWith("/admin");
   const readingTitle = useReadingTitle();
+  const onHome = pathname === "/";
+  const inNotes = NOTES_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+  const activeSection = useSectionSpy(onHome);
   const [scrolled, setScrolled] = useState(false);
   const [progress, setProgress] = useState(0);
 
@@ -85,16 +117,19 @@ export function SiteHeader({ searchIndex }: { searchIndex: SearchItem[] }) {
           </div>
         ) : (
           <nav aria-label="주 메뉴" className="site-nav">
-            {NAV.map((n) => (
+            {PORTFOLIO_NAV.map((n) => (
               <Link
-                key={n.href}
-                href={n.href}
-                className={n.href === "/" ? "nav-link nav-link--home" : "nav-link"}
-                aria-current={pathname === n.href ? "page" : undefined}
+                key={n.id}
+                href={`/#${n.id}`}
+                className={n.wide ? "nav-link nav-link--wide" : "nav-link"}
+                aria-current={activeSection === n.id ? "location" : undefined}
               >
                 {n.label}
               </Link>
             ))}
+            <Link href="/notes" className="nav-link" aria-current={inNotes ? "page" : undefined}>
+              기록
+            </Link>
           </nav>
         )}
 

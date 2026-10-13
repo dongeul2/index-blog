@@ -3,11 +3,18 @@ import { supabasePublic } from "./supabase/public";
 import type {
   Channel,
   Commit,
+  Decision,
+  Experience,
+  Metric,
   Project,
+  ProjectKind,
+  ProjectSkill,
   ProjectStatus,
   PullRequest,
   RepoLink,
   PrState,
+  Skill,
+  SkillCategory,
 } from "./project-types";
 
 export * from "./project-types";
@@ -19,8 +26,9 @@ export * from "./project-types";
  * 정적 생성을 유지하고, 무엇이 보이는지는 RLS가 정합니다.
  */
 
+// 한 줄짜리 리터럴이어야 supabase-js가 select 문자열에서 행 타입을 추론합니다
 const PROJECT_COLUMNS =
-  "slug, name, description, repo, status, link_state, branch, language, repo_public, last_activity, synced_at, image_url, site_url";
+  "slug, name, description, repo, status, link_state, branch, language, repo_public, last_activity, synced_at, image_url, site_url, kind, experience_id, role, period_start, period_end, team_size, metrics, decisions, confidential, featured, sort_order";
 
 type ProjectRow = {
   slug: string;
@@ -36,6 +44,17 @@ type ProjectRow = {
   synced_at: string | null;
   image_url: string | null;
   site_url: string | null;
+  kind: string;
+  experience_id: number | null;
+  role: string | null;
+  period_start: string | null;
+  period_end: string | null;
+  team_size: number | null;
+  metrics: Metric[];
+  decisions: Decision[];
+  confidential: boolean;
+  featured: boolean;
+  sort_order: number;
 };
 
 const toProject = (row: ProjectRow): Project => ({
@@ -50,8 +69,20 @@ const toProject = (row: ProjectRow): Project => ({
   repoPublic: row.repo_public,
   lastActivity: row.last_activity,
   syncedAt: row.synced_at,
-  imageUrl: row.image_url,
-  siteUrl: row.site_url,
+  // 기밀 프로젝트는 데이터 계층에서 이미 걷어 냅니다 — 화면마다 조건을 다는 대신 한 곳에서
+  imageUrl: row.confidential ? null : row.image_url,
+  siteUrl: row.confidential ? null : row.site_url,
+  kind: row.kind as ProjectKind,
+  experienceId: row.experience_id,
+  role: row.role,
+  periodStart: row.period_start,
+  periodEnd: row.period_end,
+  teamSize: row.team_size,
+  metrics: row.metrics ?? [],
+  decisions: row.decisions ?? [],
+  confidential: row.confidential,
+  featured: row.featured,
+  sortOrder: row.sort_order,
 });
 
 /** 최근 활동순. 활동 기록이 없는 프로젝트는 뒤로 보냅니다. */
@@ -157,3 +188,46 @@ export const getChannels = cache(async (): Promise<Channel[]> => {
 export async function getChannel(id: string): Promise<Channel | undefined> {
   return (await getChannels()).find((c) => c.id === id);
 }
+
+/* ---------- 포트폴리오: 경력 · 역량 ---------- */
+
+/** 최근 경력이 위로 */
+export const getExperiences = cache(async (): Promise<Experience[]> => {
+  const { data, error } = await supabasePublic
+    .from("experiences")
+    .select("id, organization, title, period_start, period_end, summary, highlights, confidential")
+    .order("sort_order")
+    .order("period_start", { ascending: false });
+
+  if (error) throw new Error(`경력을 불러오지 못했습니다: ${error.message}`);
+  return data.map((r) => ({
+    id: r.id,
+    organization: r.organization,
+    title: r.title,
+    periodStart: r.period_start,
+    periodEnd: r.period_end,
+    summary: r.summary,
+    highlights: r.highlights,
+    confidential: r.confidential,
+  }));
+});
+
+export const getSkills = cache(async (): Promise<Skill[]> => {
+  const { data, error } = await supabasePublic
+    .from("skills")
+    .select("slug, name, category, description")
+    .order("sort_order")
+    .order("name");
+
+  if (error) throw new Error(`역량을 불러오지 못했습니다: ${error.message}`);
+  return data.map((r) => ({ ...r, category: r.category as SkillCategory }));
+});
+
+export const getProjectSkills = cache(async (): Promise<ProjectSkill[]> => {
+  const { data, error } = await supabasePublic
+    .from("project_skills")
+    .select("project_slug, skill_slug, note");
+
+  if (error) throw new Error(`프로젝트 역량을 불러오지 못했습니다: ${error.message}`);
+  return data.map((r) => ({ projectSlug: r.project_slug, skillSlug: r.skill_slug, note: r.note }));
+});
