@@ -8,7 +8,7 @@ type Theme = "dark" | "light";
 /**
  * 테마의 정본은 React 상태가 아니라 `<html data-theme>`입니다.
  * 초기값은 `<head>`의 동기 스크립트가 페인트 전에 심어 두므로, 여기서는 그 DOM 속성을
- * 외부 저장소로 보고 구독합니다. 서버 스냅샷은 기본값인 다크입니다.
+ * 외부 저장소로 보고 구독합니다. 서버 스냅샷은 기본값인 라이트입니다.
  */
 function subscribe(onChange: () => void) {
   const mo = new MutationObserver(onChange);
@@ -22,7 +22,8 @@ function subscribe(onChange: () => void) {
 const getSnapshot = (): Theme =>
   document.documentElement.dataset.theme === "light" ? "light" : "dark";
 
-const getServerSnapshot = (): Theme => "dark";
+// 기본 테마가 밝은 쪽이라(layout의 THEME_SCRIPT) 서버 스냅샷도 light
+const getServerSnapshot = (): Theme => "light";
 
 export function ThemeToggle() {
   const theme = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);

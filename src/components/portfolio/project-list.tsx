@@ -7,6 +7,8 @@ import { formatPeriod } from "@/lib/period";
 import { ProjectCover } from "./project-cover";
 import { useSkillFilter } from "./skill-filter";
 import { ProjectEditor } from "./edit/project-editor";
+import { RoleBar } from "./role-charts";
+import type { RoleCounts } from "@/lib/roles";
 
 type Item = { project: Project; skills: Skill[] };
 
@@ -17,8 +19,14 @@ type Item = { project: Project; skills: Skill[] };
  * 프로젝트 강조색(--accent)이 커버 프레임과 수치에 번집니다.
  */
 type EditCtx = { allSkills: Skill[]; experiences: Experience[] };
+type RoleMap = Record<string, RoleCounts>;
 
-export function ProjectList({ items, allSkills, experiences }: { items: Item[] } & EditCtx) {
+export function ProjectList({
+  items,
+  allSkills,
+  experiences,
+  roleCounts,
+}: { items: Item[]; roleCounts: RoleMap } & EditCtx) {
   const { skill } = useSkillFilter();
   const ctx = { allSkills, experiences };
   const match = (i: Item) => !skill || i.skills.some((s) => s.slug === skill);
@@ -48,7 +56,7 @@ export function ProjectList({ items, allSkills, experiences }: { items: Item[] }
       {featured.length > 0 && (
         <ol className="showcases">
           {featured.map((item) => (
-            <Showcase key={item.project.slug} item={item} active={skill} ctx={ctx} />
+            <Showcase key={item.project.slug} item={item} active={skill} ctx={ctx} roles={roleCounts[item.project.slug]} />
           ))}
         </ol>
       )}
@@ -87,10 +95,12 @@ function Showcase({
   item: { project: p, skills },
   active,
   ctx,
+  roles,
 }: {
   item: Item;
   active: string | null;
   ctx: EditCtx;
+  roles?: RoleCounts;
 }) {
   const gallery = p.gallery.slice(0, 3);
   return (
@@ -129,6 +139,7 @@ function Showcase({
           <Link href={`/projects/${p.slug}`}>{p.name}</Link>
         </h3>
         <p className="showcase__overview">{p.overview || p.description}</p>
+        {roles && <RoleBar counts={roles} />}
         {p.role && (
           <p className="showcase__role">
             <span>맡은 일</span> {p.role}

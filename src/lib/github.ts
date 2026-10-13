@@ -135,24 +135,33 @@ type CommitResponse = {
   author: { login: string } | null;
 };
 
-export async function fetchCommits(repo: string, limit = 20): Promise<GitHubResult<CommitInfo[]>> {
-  const result = await call<CommitResponse[]>(`/repos/${repo}/commits?per_page=${limit}`);
-  if (!result.ok) {
-    // 커밋이 하나도 없는 빈 저장소는 409를 돌려줍니다. 빈 목록으로 봅니다.
-    if (result.kind === "error" && result.message.includes("409")) return { ok: true, data: [] };
-    return result;
+/**
+ * 커밋 — 최신순, 최대 `limit`개. 100개씩 페이지를 넘깁니다.
+ * 홈의 역할 비율 차트가 전체 기록을 보므로 넉넉히 받고, 목록 화면은 그중 몇 개만 씁니다.
+ */
+export async function fetchCommits(repo: string, limit = 500): Promise<GitHubResult<CommitInfo[]>> {
+  const out: CommitInfo[] = [];
+  for (let page = 1; out.length < limit; page++) {
+    const perPage = Math.min(100, limit - out.length);
+    const result = await call<CommitResponse[]>(`/repos/${repo}/commits?per_page=${perPage}&page=${page}`);
+    if (!result.ok) {
+      // 커밋이 하나도 없는 빈 저장소는 409를 돌려줍니다. 빈 목록으로 봅니다.
+      if (result.kind === "error" && result.message.includes("409")) return { ok: true, data: out };
+      return result;
+    }
+    out.push(
+      ...result.data.map((c) => ({
+        sha: c.sha,
+        // 커밋 메시지의 첫 줄만 씁니다 — 목록은 한 줄로 보여 줍니다.
+        message: (c.commit.message ?? "").split("\n")[0],
+        author: c.author?.login ?? c.commit.author?.name ?? null,
+        committedAt: c.commit.author?.date ?? new Date().toISOString(),
+        url: c.html_url,
+      })),
+    );
+    if (result.data.length < perPage) break;
   }
-  return {
-    ok: true,
-    data: result.data.map((c) => ({
-      sha: c.sha,
-      // 커밋 메시지의 첫 줄만 씁니다 — 목록은 한 줄로 보여 줍니다.
-      message: (c.commit.message ?? "").split("\n")[0],
-      author: c.author?.login ?? c.commit.author?.name ?? null,
-      committedAt: c.commit.author?.date ?? new Date().toISOString(),
-      url: c.html_url,
-    })),
-  };
+  return { ok: true, data: out };
 }
 
 export type PullInfo = {

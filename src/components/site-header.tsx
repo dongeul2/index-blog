@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 /** 홈(포트폴리오)의 섹션 — 다른 페이지에서는 `/#id`로 홈의 그 섹션으로 갑니다 */
 const PORTFOLIO_NAV = [
   { id: "about", label: "소개", wide: true },
+  { id: "how", label: "방식", wide: true },
   { id: "skills", label: "역량", wide: true },
   { id: "projects", label: "프로젝트", wide: false },
   { id: "career", label: "경력", wide: true },

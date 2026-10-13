@@ -3,6 +3,8 @@
 @import "./fonts.css";
 /* 포트폴리오 홈(제도 용지) — 기존 토큰만 씁니다 */
 @import "./portfolio.css";
+/* 역할 색 체계와 역할 비율 차트 */
+@import "./roles.css";
 @import "./portfolio-edit.css";
 /* 블로그형 에디터와 그 문서 본문 */
 @import "./rich.css";
@@ -61,11 +63,19 @@
   --color-text: oklch(0.95 0.005 265);          /* #EEF0F4 · 14.6:1 */
 
   /* ---------- 액센트 (단 1개) ---------- */
-  /* 마닐라 — 색인 카드와 서류철의 색. 링크·포커스·1차 버튼에만 씁니다 */
-  --color-accent: oklch(0.84 0.09 88);
-  --color-accent-strong: oklch(0.90 0.10 92);
-  --color-accent-bg: oklch(0.30 0.035 88);
-  --color-accent-on: oklch(0.22 0.02 80);       /* 액센트 배경 위 글자 */
+  /* 울트라마린 — 링크·포커스·1차 버튼에만 씁니다. 「개발」 역할 색과 같은 계열 */
+  --color-accent: oklch(0.74 0.14 275);
+  --color-accent-strong: oklch(0.82 0.11 275);
+  --color-accent-bg: oklch(0.31 0.06 275);
+  --color-accent-on: oklch(0.20 0.03 275);      /* 액센트 배경 위 글자 */
+
+  /* ---------- 역할 (v0.4) ---------- */
+  /* 기획·개발·QA·운영 — 이 포트폴리오의 색 체계. 면(막대·영역·점·펜)에만 쓰고 글자에는 쓰지 않습니다.
+     글자는 언제나 본문 색이라 네 색 모두 대비 걱정 없이 밝게 둘 수 있습니다. */
+  --color-role-plan: oklch(0.82 0.15 78);
+  --color-role-dev: oklch(0.70 0.17 272);
+  --color-role-qa: oklch(0.80 0.13 172);
+  --color-role-ops: oklch(0.73 0.19 2);
 
   /* ---------- 콘텐츠 카테고리 ---------- */
   --color-cat-devlog: oklch(0.76 0.06 250);
@@ -131,19 +141,25 @@
 @layer base {
   /* ---------- 라이트 모드: 뉴트럴 + 신택스만 덮어쓴다 ---------- */
   :root[data-theme="light"] {
-    --color-bg: oklch(0.99 0.002 100);
-    --color-bg-subtle: oklch(0.965 0.003 100);
-    --color-surface: oklch(0.935 0.004 120);
-    --color-border: oklch(0.885 0.004 120);
-    --color-border-strong: oklch(0.80 0.005 120);
-    --color-text-muted: oklch(0.52 0.010 250);  /* 5.3:1 */
-    --color-text-2: oklch(0.38 0.010 250);      /* 9.1:1 */
-    --color-text: oklch(0.20 0.010 250);        /* 15.8:1 */
+    /* v0.4: 따뜻한 종이색 대신 차갑고 밝은 흰색 — 역할 색 네 개가 가장 맑게 보이는 바탕 */
+    --color-bg: oklch(0.995 0.002 265);
+    --color-bg-subtle: oklch(0.975 0.004 265);
+    --color-surface: oklch(0.95 0.006 265);
+    --color-border: oklch(0.91 0.006 265);
+    --color-border-strong: oklch(0.83 0.008 265);
+    --color-text-muted: oklch(0.52 0.012 265);  /* 5.3:1 */
+    --color-text-2: oklch(0.38 0.012 265);      /* 9.1:1 */
+    --color-text: oklch(0.19 0.015 265);        /* 16:1 */
 
-    --color-accent: oklch(0.50 0.10 75);
-    --color-accent-strong: oklch(0.42 0.10 70);
-    --color-accent-bg: oklch(0.95 0.035 90);
-    --color-accent-on: oklch(0.99 0.002 100);
+    --color-accent: oklch(0.50 0.21 272);        /* 흰 바탕 6:1 */
+    --color-accent-strong: oklch(0.42 0.20 272);
+    --color-accent-bg: oklch(0.95 0.03 272);
+    --color-accent-on: oklch(0.995 0.002 265);
+
+    --color-role-plan: oklch(0.80 0.16 75);
+    --color-role-dev: oklch(0.56 0.22 272);
+    --color-role-qa: oklch(0.74 0.14 172);
+    --color-role-ops: oklch(0.66 0.22 2);
 
     --color-cat-devlog: oklch(0.50 0.09 250);
     --color-cat-devlog-bg: oklch(0.95 0.02 250);

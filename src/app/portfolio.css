@@ -3,6 +3,13 @@
    히어로(플로터가 그리는 이름 + CAD 커서)와 프로젝트(커버·강조색)만 눈에 띄고, 나머지는 조용히.
    그림자는 쓰지 않습니다 — 층은 괘선과 면 색으로 나눕니다.
    ============================================================ */
+/* 히어로의 벌어짐(--e)을 transition할 수 있게 숫자 타입으로 등록 — @property는 최상위에만 둡니다 */
+@property --e {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
 @layer components {
   /* ---------- 히어로: 용지 · 플로터 · 커서 ---------- */
   .hero {
@@ -36,28 +43,87 @@
     color: var(--color-text-2);
     animation: hero-in 500ms ease-out 1.6s both;
   }
-  .hero__title { margin-top: 0.75rem; }
-  .hero__name {
-    display: block;
+  /* ---------- 네 자루 펜 + 먹, 3D로 벌어지는 다섯 장 ---------- */
+  .hero__title {
+    margin-top: 0.75rem;
+    perspective: 1400px;
+    perspective-origin: 30% 50%;
+  }
+  .hero__stack {
+    --e: 0;                                   /* 벌어진 정도 0~1 */
+    position: relative;
     width: min(100%, 62rem);
+    transform-style: preserve-3d;
+    transform: rotateX(calc(var(--rx, 18deg) * var(--e))) rotateY(calc(var(--ry, 0deg) * var(--e)));
+    transition: --e 600ms cubic-bezier(0.2, 0.8, 0.2, 1), transform 400ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .hero[data-cursor="on"] .hero__stack { --e: 1; }
+  .hero__layer {
+    position: absolute;
+    inset: 0;
+    /* 펜마다 몇 px씩 어긋나게 — 다색 인쇄의 판 어긋남 */
+    translate: calc(var(--dx) * 1px) calc(var(--dy) * 1px) calc((var(--i) - 1.5) * 80px * var(--e) - 60px * var(--e));
+    transition: translate 600ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .hero__layer[data-role="plan"] { --dx: -4; --dy: -3; --pen: var(--color-role-plan); }
+  .hero__layer[data-role="dev"]  { --dx: 3;  --dy: -2; --pen: var(--color-role-dev); }
+  .hero__layer[data-role="qa"]   { --dx: -2; --dy: 3;  --pen: var(--color-role-qa); }
+  .hero__layer[data-role="ops"]  { --dx: 4;  --dy: 3;  --pen: var(--color-role-ops); }
+  .hero__pen,
+  .hero__ink {
+    display: block;
+    width: 100%;
     height: auto;
     overflow: visible;
   }
-  .hero__name text {
+  .hero__ink { position: relative; translate: 0 0 calc(110px * var(--e)); transition: translate 600ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .hero__pen text,
+  .hero__ink text {
     font-family: var(--font-sans);
     font-size: 150px;
     font-weight: 800;
     letter-spacing: -0.045em;
-    /* 색은 고정하고 불투명도만 움직입니다 — @keyframes 안의 var()는 테마 전환 때 기본값(검정)으로 떨어집니다 */
-    fill: var(--color-text);
-    fill-opacity: 0;
-    stroke: var(--color-accent);
-    stroke-width: 1.25;
+  }
+  .hero__pen text {
+    fill: none;
+    stroke: var(--pen);
+    stroke-width: 2.5;
+    stroke-linejoin: round;
     stroke-dasharray: 2400;
     stroke-dashoffset: 2400;
-    animation:
-      hero-draw 2.2s cubic-bezier(0.6, 0, 0.3, 1) 0.3s forwards,
-      hero-fill 600ms ease-out 2.1s forwards;
+    /* 펜이 한 자루씩 차례로 */
+    animation: hero-draw 1.8s cubic-bezier(0.6, 0, 0.3, 1) calc(0.2s + var(--i) * 0.32s) forwards;
+  }
+  /* 색은 고정하고 불투명도만 움직입니다 — @keyframes 안의 var()는 테마 전환 때 기본값(검정)으로 떨어집니다 */
+  .hero__ink text {
+    fill: var(--color-text);
+    fill-opacity: 0;
+    animation: hero-ink 700ms ease-out 2.3s forwards;
+  }
+  .hero__tag {
+    position: absolute;
+    right: -0.5rem;
+    top: 40%;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.625rem;
+    border: 1px solid var(--pen);
+    background: var(--color-bg);
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--color-text);
+    opacity: var(--e);
+    translate: calc(var(--i) * 0.5rem) 0;
+    transition: opacity 400ms ease;
+    white-space: nowrap;
+  }
+  .hero__tag::before {
+    content: "";
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--pen);
   }
   .hero__intro {
     margin-top: 1.5rem;
@@ -106,7 +172,7 @@
   @keyframes hero-grid { from { opacity: 0; } }
   @keyframes hero-in { from { opacity: 0; transform: translateY(6px); } }
   @keyframes hero-draw { to { stroke-dashoffset: 0; } }
-  @keyframes hero-fill { to { fill-opacity: 1; stroke-opacity: 0; } }
+  @keyframes hero-ink { to { fill-opacity: 1; } }
 
   /* ---------- 섹션 ---------- */
   .folio-section {
@@ -564,7 +630,9 @@
     .hero__role,
     .hero__intro,
     .hero__next { animation: none; }
-    .hero__name text { animation: none; fill-opacity: 1; stroke: none; }
+    .hero__pen text { animation: none; stroke-dashoffset: 0; }
+    .hero__ink text { animation: none; fill-opacity: 1; }
+    .hero__stack, .hero__layer, .hero__ink { transition: none; }
     .career__rail::after { animation: none; }
     .cover--drift .cover__img, .cover--mini { animation: none; transition: none; }
     ::view-transition-group(*) { animation: none; }

@@ -266,3 +266,20 @@ export const getProfile = cache(async (): Promise<Profile> => {
     github: data.github,
   };
 });
+
+/**
+ * 역할 비율 차트용 커밋 기록 — 메시지 첫 줄과 시각만. 저장소를 공개한 프로젝트만 보입니다(RLS).
+ * 목록 화면의 getCommits와 달리 전부 받습니다(프로젝트당 최대 500, sync.ts).
+ */
+export const getRoleCommits = cache(
+  async (): Promise<{ projectSlug: string; message: string; at: string }[]> => {
+    const { data, error } = await supabasePublic
+      .from("repo_commits")
+      .select("project_slug, message, committed_at")
+      .order("committed_at")
+      .limit(5000);
+
+    if (error) throw new Error(`커밋 기록을 불러오지 못했습니다: ${error.message}`);
+    return data.map((r) => ({ projectSlug: r.project_slug, message: r.message, at: r.committed_at }));
+  },
+);

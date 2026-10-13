@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { getExperiences, getProfile, getProjects, getProjectSkills, getSkills } from "@/lib/projects";
+import { getExperiences, getProfile, getProjects, getProjectSkills, getRoleCommits, getSkills } from "@/lib/projects";
+import { byWeek, countRoles, type RoleCounts } from "@/lib/roles";
+import { RoleArea, RoleTotals } from "@/components/portfolio/role-charts";
 import { getPosts } from "@/lib/posts";
 import type { Project, Skill } from "@/lib/project-types";
 import { Hero } from "@/components/portfolio/hero";
@@ -19,13 +21,14 @@ import { ExperienceEditor } from "@/components/portfolio/edit/experience-editor"
  * 모든 내용은 DB에서 오고, 관리자는 이 화면에서 바로 고칩니다(`components/portfolio/edit`).
  */
 export default async function PortfolioPage() {
-  const [profile, projects, skills, links, experiences, posts] = await Promise.all([
+  const [profile, projects, skills, links, experiences, posts, commits] = await Promise.all([
     getProfile(),
     getProjects(),
     getSkills(),
     getProjectSkills(),
     getExperiences(),
     getPosts(),
+    getRoleCommits(),
   ]);
 
   const skillBySlug = new Map(skills.map((s) => [s.slug, s]));
@@ -44,6 +47,16 @@ export default async function PortfolioPage() {
   // 범례의 숫자 — 그 역량을 쓴 프로젝트 수
   const usage: Record<string, number> = {};
   for (const l of links) usage[l.skillSlug] = (usage[l.skillSlug] ?? 0) + 1;
+
+  // 역할 비율 — 저장소를 공개한 프로젝트의 커밋 전체(lib/roles.ts의 분류 규칙)
+  const totals = countRoles(commits.map((c) => c.message));
+  const weeks = byWeek(commits);
+  const roleCounts: Record<string, RoleCounts> = {};
+  for (const p of projects) {
+    const mine = commits.filter((c) => c.projectSlug === p.slug).map((c) => c.message);
+    if (mine.length > 0) roleCounts[p.slug] = countRoles(mine);
+  }
+  const hasRoles = Object.values(totals).some((n) => n > 0);
 
   const entries = experiences.map((experience) => ({
     experience,
@@ -65,6 +78,17 @@ export default async function PortfolioPage() {
             <FolioSection id="about" title="소개" tools={<ProfileEditor profile={profile} />}>
               <TitleBlock profile={profile} />
             </FolioSection>
+
+            {hasRoles && (
+              <FolioSection id="how" title="일하는 방식">
+                <p className="how__lead">
+                  한 가지 직무가 아니라 기획·개발·QA·운영을 오가며 일합니다. 아래 숫자는 말이 아니라 공개된
+                  커밋 기록에서 계산한 비율입니다.
+                </p>
+                <RoleTotals counts={totals} />
+                <RoleArea weeks={weeks} />
+              </FolioSection>
+            )}
 
             <FolioSection id="skills" title="역량">
               <SkillLegend skills={skills} usage={usage} />
@@ -98,7 +122,7 @@ export default async function PortfolioPage() {
             </FolioSection>
 
             <FolioSection id="projects" title="프로젝트">
-              <ProjectList items={items} allSkills={skills} experiences={experiences} />
+              <ProjectList items={items} allSkills={skills} experiences={experiences} roleCounts={roleCounts} />
             </FolioSection>
 
             <FolioSection id="career" title="경력" tools={<ExperienceEditor />}>
