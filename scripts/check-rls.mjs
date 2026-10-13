@@ -79,8 +79,8 @@ for (const slug of [visible, "rls-check-draft"].filter(Boolean)) {
 const { data: admins } = await db.from("admins").select("github_login");
 check("admins 테이블 비공개", !admins || admins.length === 0);
 
-// 5. 프로젝트·채널·저장소 캐시 — 읽기는 열려 있고 쓰기는 막혀야 합니다
-for (const table of ["projects", "channels", "repo_commits", "repo_pulls"]) {
+// 5. 프로젝트·채널·저장소 캐시·포트폴리오 — 읽기는 열려 있고 쓰기는 막혀야 합니다
+for (const table of ["projects", "channels", "repo_commits", "repo_pulls", "experiences", "skills", "project_skills"]) {
   const { error: readError } = await db.from(table).select("*").limit(1);
   check(`${table} 읽기 가능`, !readError, readError?.message ?? "");
 }
@@ -101,6 +101,22 @@ const { error: channelInsert } = await db
   .from("channels")
   .insert({ id: "anon-should-fail", name: "x" });
 check("channels 익명 INSERT 차단", Boolean(channelInsert));
+
+// 6. 포트폴리오 테이블은 RLS에 더해 anon 권한 자체가 읽기뿐입니다(20261013030247)
+const { error: experienceInsert } = await db
+  .from("experiences")
+  .insert({ organization: "x", title: "x", period_start: "2020-01-01" });
+check("experiences 익명 INSERT 차단", Boolean(experienceInsert));
+
+const { error: skillInsert } = await db
+  .from("skills")
+  .insert({ slug: "anon-should-fail", name: "x", category: "qa" });
+check("skills 익명 INSERT 차단", Boolean(skillInsert));
+
+const { error: linkInsert } = await db
+  .from("project_skills")
+  .insert({ project_slug: "index-blog", skill_slug: "anon-should-fail" });
+check("project_skills 익명 INSERT 차단", Boolean(linkInsert));
 
 console.log(failed === 0 ? "\n전부 통과" : `\n${failed}건 실패`);
 process.exit(failed === 0 ? 0 : 1);

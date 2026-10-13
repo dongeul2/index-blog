@@ -29,6 +29,8 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run test:coverage
+      # 운영 DB에 공개 키로 붙어 RLS·권한이 실제로 막는지 확인합니다(쓰기 시도는 모두 거부되어야 함)
+      - run: npm run test:rls
       - name: Coverage summary
         if: always()
         run: |

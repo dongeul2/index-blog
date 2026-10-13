@@ -10,7 +10,7 @@ npm run lint && npm run typecheck
 npm test               # Vitest 단위 테스트
 npm run test:e2e       # Playwright E2E (데스크톱·모바일 + axe 접근성)
 
-node --env-file=.env.local scripts/check-rls.mjs    # 공개 키로 RLS가 실제로 막는지 확인
+node --env-file=.env.local scripts/check-rls.mjs    # 공개 키로 RLS가 실제로 막는지 확인 (CI: npm run test:rls)
 ```
 
 `.env.local`에 필요한 값: `NEXT_PUBLIC_SUPABASE_URL`, 공개 키(`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
