@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/dongeul2/index-blog/compare/index-blog-v0.4.0...index-blog-v0.4.1) (2026-10-15)
+
+
+### 문서
+
+* 재기획 — 제품 서사와 직무별 트랙(ADR 0006) ([#83](https://github.com/dongeul2/index-blog/issues/83)) ([f116086](https://github.com/dongeul2/index-blog/commit/f1160868dd3e2414e9726e6402f8e10003f6ba27))
+
 ## [0.4.0](https://github.com/dongeul2/index-blog/compare/index-blog-v0.3.0...index-blog-v0.4.0) (2026-10-13)
 
 
